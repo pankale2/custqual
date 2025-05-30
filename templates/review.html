@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Review Data</title>
+    <style>
+        body {
+            font-size: 13px;
+            font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
+            background: #f7f8fa;
+            color: #22223b;
+            margin: 0;
+            padding: 0;
+        }
+        .header-row {
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            margin: 0 0 8px 0;
+            padding: 0 8px;
+        }
+        .header-title {
+            color: #277bf5;
+            font-size: 16px;
+            font-weight: 700;
+            text-align: left;
+            flex: 1;
+        }
+        .container {
+            display: flex;
+            flex-direction: row;
+        }
+        .left, .right, .form-area {
+            padding: 8px;
+            background: #f3f6fa;
+        }
+        .left, .form-area {
+            min-width: 260px;
+            max-width: 320px;
+            background: #f3f6fa;
+            border-right: 1px solid #e0e2e7;
+            box-sizing: border-box;
+            white-space: nowrap; /* Prevent text wrapping in left area */
+            overflow-x: auto;
+        }
+        .form-area {
+            border-left: 1px solid #e0e2e7;
+            border-right: none;
+            background: #f3f6fa;
+        }
+        .right {
+            flex: 1;
+            background: #fff;
+            border-right: 1px solid #e0e2e7;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-bottom: 8px;
+        }
+        td {
+            font-size: 12px;
+            padding: 3px 6px;
+            border-bottom: 1px solid #e0e2e7;
+            text-align: left;
+        }
+        th {
+            font-size: 12px;
+            padding: 3px 6px;
+            border-bottom: 1px solid #e0e2e7;
+            text-align: right;            
+            background: #eaf1fb;
+            color: #277bf5;
+            font-weight: 600;
+        }
+        ul {
+            margin: 2px 0 2px 18px;
+            padding: 0;
+        }
+        li {
+            margin: 0 0 0 0;
+            padding: 0;
+            font-size: 12px;
+        }
+        .row-block {
+            border: 1px solid #e0e2e7;
+            border-radius: 8px;
+            background: #fff;
+            margin-bottom: 8px;
+            padding: 8px 8px 4px 8px;
+            box-shadow: 0 2px 8px 0 rgba(39,123,245,0.05);
+        }
+        label {
+            margin-right: 0;
+            font-size: 12px;
+            display: block;
+            margin-bottom: 2px;
+        }
+        .feedback-radio-group label {
+            margin-bottom: 4px;
+        }
+        textarea {
+            width: 98%;
+            font-size: 12px;
+            border-radius: 4px;
+            border: 1px solid #e0e2e7;
+            padding: 2px 4px;
+        }
+        button {
+            background: linear-gradient(90deg, #277bf5 0%, #00c6fb 100%);
+            color: #fff;
+            font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
+            font-weight: 600;
+            font-size: 1rem;
+            border: none;
+            border-radius: 6px;
+            padding: 6px 18px;
+            cursor: pointer;
+            margin-top: 0;
+            box-shadow: 0 2px 8px 0 rgba(39,123,245,0.10);
+            transition: background 0.2s, box-shadow 0.2s;            
+        }
+        button:hover {
+            background: linear-gradient(90deg, #00c6fb 0%, #277bf5 100%);
+            box-shadow: 0 4px 16px 0 rgba(39,123,245,0.18);
+        }
+        .section-title {
+            color: #277bf5;
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 2px;
+            margin-top: 8px;
+        }
+        .qid-counter {
+            font-size: 12px;
+            color: #277bf5;
+            margin-left: 0;
+            font-weight: 600;
+            margin-bottom: 10px;
+            text-align: right;
+        }
+        .nav-btns {
+            margin: 0 0 10px 0;
+            display: flex;
+            gap: 4px;
+        }
+        .nav-btns form {
+            display: inline;
+        }
+    </style>
+</head>
+<body>
+    <div class="header-row">
+        <div class="header-title">Review/Edit Data</div>
+    </div>
+    <div class="container">
+        <div class="left">
+            <table>
+                <tbody>
+                    {% for k, v in unique_data.items() %}
+                        {% if k != "COUNTRY LANGUAGE" and k != "QUESTION TEXT LANGUAGE" and k != "QUESTION ID" %}
+                            <tr>
+                                <th>{{k}}</th>
+                                <td>
+                                    {% set items = v.split(', ') %}
+                                    {% if items|length > 1 %}
+                                        <ul>
+                                            {% for item in items %}
+                                                <li>{{item}}</li>
+                                            {% endfor %}
+                                        </ul>
+                                    {% else %}
+                                        {{v}}
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% endif %}
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <div class="right">
+            {% if answer_rows|length > 0 %}
+            <div class="row-block">
+                <table>
+                    <tbody>
+                        <tr>
+                            <th>QUESTION ID</th>
+                            <td>{{unique_data["QUESTION ID"]}}</td>
+                        </tr>
+                        <tr>
+                            <th>QUESTION NAME</th>
+                            <td>
+                                {% set items = answer_rows | map(attribute='QUESTION NAME') | select('string') | unique | list %}
+                                {% if items|length > 1 %}
+                                    <ul>{% for item in items %}<li>{{item}}</li>{% endfor %}</ul>
+                                {% else %}
+                                    {{items[0] if items else ''}}
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>QUESTION TEXT</th>
+                            <td>
+                                {% set items = answer_rows | map(attribute='QUESTION TEXT') | select('string') | unique | list %}
+                                {% if items|length > 1 %}
+                                    <ul>{% for item in items %}<li>{{item}}</li>{% endfor %}</ul>
+                                {% else %}
+                                    {{items[0] if items else ''}}
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>COUNTRY LANGUAGE</th>
+                            <td>{{unique_data["COUNTRY LANGUAGE"]}}</td>
+                        </tr>
+                        <tr>
+                            <th>QUESTION TEXT LANGUAGE (detected)</th>
+                            <td>
+                                {% set items = answer_rows | map(attribute='QUESTION TEXT LANGUAGE') | select('string') | unique | list %}
+                                {% if items|length > 1 %}
+                                    <ul>{% for item in items %}<li>{{item}}</li>{% endfor %}</ul>
+                                {% else %}
+                                    {{items[0] if items else ''}}
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <!-- ANSWER PRECODE & ANSWER OPTION TEXT as a pair table -->
+                        <tr>
+                            <th style="background:#f7f8fa;color:#277bf5;">Answer Options</th>
+                            <td style="padding:0;">
+                                <table style="width:100%;border:none;">
+                                    <thead>
+                                        <tr>
+                                            <th style="width:60px;min-width:40px;text-align: right;">PRECODE</th>
+                                            <th style="text-align: left;">OPTION TEXT</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% set seen = [] %}
+                                        {% for row in answer_rows %}
+                                            {% set precode = row["ANSWER PRECODE"] %}
+                                            {# Show precode as int (no decimals), allow negative numbers, handle floats #}
+                                            {% if precode is not none %}
+                                                {% if precode is string %}
+                                                    {% set precode_str = precode.strip() %}
+                                                {% else %}
+                                                    {% set precode_str = precode|string %}
+                                                {% endif %}
+                                                {% if precode_str|length > 0 and (precode_str.lstrip('-').replace('.','',1).isdigit()) %}
+                                                    {% if '.' in precode_str %}
+                                                        {% set precode_val = precode_str|float|round|int %}
+                                                    {% else %}
+                                                        {% set precode_val = precode_str|int %}
+                                                    {% endif %}
+                                                {% else %}
+                                                    {% set precode_val = precode_str %}
+                                                {% endif %}
+                                            {% else %}
+                                                {% set precode_val = '' %}
+                                            {% endif %}
+                                            {% set pair = (precode_val, row["ANSWER OPTION TEXT"]) %}
+                                            {% if pair not in seen %}
+                                                {% set _ = seen.append(pair) %}
+                                                <tr>
+                                                    <td style="width:60px;min-width:40px;text-align: right;">{{precode_val}}</td>
+                                                    <td>{{row["ANSWER OPTION TEXT"]}}</td>
+                                                </tr>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            {% endif %}
+        </div>
+        <div class="form-area">
+            <div class="qid-counter">
+                QUESTION ID {{qidx+1}} of {{qid_count}}
+            </div>
+            <form method="post" action="/review?qidx={{qidx}}">
+                {% if answer_rows|length > 0 %}
+                    <div class="section-title">Feedback</div>
+                    <div class="feedback-radio-group">
+                        {% set fb = answer_rows[0].Feedback|string %}
+                        {% set is_other = fb.startswith('Other:') %}
+                        <label>
+                            <input type="radio" name="feedback" value="Rephrase + Need Additional Options" {% if fb == "Rephrase + Need Additional Options" %}checked{% endif %}>
+                            Rephrase + Need Additional Options
+                        </label>
+                        <label>
+                            <input type="radio" name="feedback" value="Custom instead of standard" {% if fb == "Custom instead of standard" %}checked{% endif %}>
+                            Custom instead of standard
+                        </label>
+                        <label>
+                            <input type="radio" name="feedback" value="Language Translation Required" {% if fb == "Language Translation Required" %}checked{% endif %}>
+                            Language Translation Required
+                        </label>
+                        <label>
+                            <input type="radio" name="feedback" value="Other: " {% if is_other %}checked{% endif %} id="other-radio">
+                            Other:
+                        </label>
+                        {% if is_other %}
+                            {% set other_val = fb[7:] %}
+                        {% else %}
+                            {% set other_val = '' %}
+                        {% endif %}
+                        <textarea id="other-textarea" name="other_feedback" rows="2"
+                            style="font-size:12px; width:98%; border-radius:4px; border:1px solid {% if is_other and (other_val|length < 6 or other_val.strip().count(' ') < 1) %}#e74c3c{% else %}#e0e2e7{% endif %}; margin-top:2px;"
+                            {% if is_other %}required{% endif %}
+                            placeholder="Please specify at least 6 characters and 2 words"
+                            title="Please enter at least 6 characters and at least 2 words">{% if is_other %}{{other_val}}{% endif %}</textarea>
+                        <div id="other-feedback-hint" style="color:#e74c3c; font-size:11px; display:none; margin-bottom:4px;">
+                            Please enter at least 6 characters and at least 2 words.
+                        </div>
+                        <script>
+                            function validateOther() {
+                                var otherRadio = document.getElementById('other-radio');
+                                var otherTextarea = document.getElementById('other-textarea');
+                                var navBtns = document.querySelectorAll('.nav-btns button');
+                                var hint = document.getElementById('other-feedback-hint');
+                                var valid = true;
+                                if (otherRadio && otherTextarea) {
+                                    if (otherRadio.checked) {
+                                        otherTextarea.required = true;
+                                        var val = otherTextarea.value.trim();
+                                        var words = val.split(/\s+/);
+                                        if (val.length < 6 || words.length < 2) {
+                                            otherTextarea.style.borderColor = "#e74c3c";
+                                            if (hint) hint.style.display = "block";
+                                            valid = false;
+                                        } else {
+                                            otherTextarea.style.borderColor = "#e0e2e7";
+                                            if (hint) hint.style.display = "none";
+                                            valid = true;
+                                        }
+                                    } else {
+                                        otherTextarea.required = false;
+                                        otherTextarea.style.borderColor = "#e0e2e7";
+                                        if (hint) hint.style.display = "none";
+                                        valid = true;
+                                    }
+                                }
+                                // Disable nav buttons if not valid
+                                navBtns.forEach(function(btn) {
+                                    btn.disabled = !valid || btn.getAttribute('data-always-disabled') === '1';
+                                    btn.style.opacity = (!valid || btn.getAttribute('data-always-disabled') === '1') ? 0.5 : 1;
+                                    btn.style.cursor = (!valid || btn.getAttribute('data-always-disabled') === '1') ? 'not-allowed' : 'pointer';
+                                });
+                            }
+                            document.addEventListener('DOMContentLoaded', function() {
+                                var otherRadio = document.getElementById('other-radio');
+                                var otherTextarea = document.getElementById('other-textarea');
+                                if (otherRadio && otherTextarea) {
+                                    otherRadio.addEventListener('change', validateOther);
+                                    otherTextarea.addEventListener('input', validateOther);
+                                    var radios = document.querySelectorAll('input[type=radio][name=feedback]');
+                                    radios.forEach(function(radio) {
+                                        radio.addEventListener('change', validateOther);
+                                    });
+                                    validateOther();
+                                }
+                            });
+                        </script>
+                    </div>
+                    <div class="section-title">Recommendation</div>
+                    <textarea name="recommendation" rows="5"
+                        id="recommendation-textarea"
+                        {% if fb == "Language Translation Required" %}disabled style="background:#f7f8fa; color:#888;"{% endif %}
+                    >{{answer_rows[0].Recommendation}}</textarea>
+                    <script>
+                        // Disable/enable Recommendation textarea based on feedback selection
+                        document.addEventListener('DOMContentLoaded', function() {
+                            var radios = document.querySelectorAll('input[type=radio][name=feedback]');
+                            var recBox = document.getElementById('recommendation-textarea');
+                            function updateRecBox() {
+                                var selected = '';
+                                radios.forEach(function(r) { if (r.checked) selected = r.value; });
+                                if (selected === "Language Translation Required") {
+                                    recBox.disabled = true;
+                                    recBox.style.background = "#f7f8fa";
+                                    recBox.style.color = "#888";
+                                } else {
+                                    recBox.disabled = false;
+                                    recBox.style.background = "";
+                                    recBox.style.color = "";
+                                }
+                            }
+                            radios.forEach(function(r) { r.addEventListener('change', updateRecBox); });
+                        });
+                    </script>
+                    <div class="nav-btns" style="flex-direction: row; gap: 8px;">
+                        <button type="submit" name="nav_prev" value="1" 
+                                {% if not has_prev %}disabled{% endif %}>Previous</button>
+                        <button type="submit" name="nav_next" value="1"
+                                {% if not has_next %}disabled{% endif %}>Next</button>
+                    </div>
+                    <div style="margin-top: 10px;">
+                        <button type="submit" name="download" value="1">Download updated file</button>
+                    </div>
+                {% endif %}
+                </br>
+            </form>
+            </br>            
+        </div>
+    </div>
+</body>
+</html>

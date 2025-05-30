@@ -4,12 +4,140 @@
     <meta charset="UTF-8">
     <title>Excel Processor</title>
     <link rel="stylesheet" href="/static/cint.css">
+    <style>
+        body {
+            background: #f7f8fa;
+            font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
+            color: #22223b;
+            margin: 0;
+            padding: 0;
+        }
+        .cint-header {
+            background: linear-gradient(90deg, #277bf5 0%, #00c6fb 100%);
+            color: #fff;
+            padding: 32px 0 24px 0;
+            text-align: center;
+            font-size: 2.2rem;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            box-shadow: 0 2px 12px 0 rgba(39,123,245,0.08);
+        }
+        .cint-subtitle {
+            color: #277bf5;
+            font-size: 1.2rem;
+            font-weight: 500;
+            text-align: center;
+            margin-top: 12px;
+            margin-bottom: 32px;
+        }
+        .cint-form-card {
+            background: #fff;
+            max-width: 420px;
+            margin: 40px auto 0 auto;
+            padding: 36px 32px 28px 32px;
+            border-radius: 18px;
+            box-shadow: 0 4px 24px 0 rgba(39,123,245,0.10);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .cint-form-card input[type="file"] {
+            margin-bottom: 22px;
+            font-size: 1rem;
+            color: #22223b;
+        }
+        .cint-form-card button {
+            background: linear-gradient(90deg, #277bf5 0%, #00c6fb 100%);
+            color: #fff;
+            font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
+            font-weight: 600;
+            font-size: 1.1rem;
+            border: none;
+            border-radius: 8px;
+            padding: 12px 32px;
+            cursor: pointer;
+            box-shadow: 0 2px 8px 0 rgba(39,123,245,0.10);
+            transition: background 0.2s, box-shadow 0.2s;
+        }
+        .cint-form-card button:hover {
+            background: linear-gradient(90deg, #00c6fb 0%, #277bf5 100%);
+            box-shadow: 0 4px 16px 0 rgba(39,123,245,0.18);
+        }
+        .cint-success {
+            background: #eaf1fb;
+            border-radius: 12px;
+            margin: 36px auto 0 auto;
+            max-width: 420px;
+            padding: 24px 28px 20px 28px;
+            box-shadow: 0 2px 8px 0 rgba(39,123,245,0.07);
+            text-align: center;
+        }
+        .cint-success h2 {
+            color: #277bf5;
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin: 0 0 12px 0;
+        }
+        .cint-success a {
+            display: inline-block;
+            margin: 8px 12px 0 12px;
+            color: #fff;
+            background: linear-gradient(90deg, #277bf5 0%, #00c6fb 100%);
+            padding: 8px 22px;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 1rem;
+            text-decoration: none;
+            box-shadow: 0 2px 8px 0 rgba(39,123,245,0.10);
+            transition: background 0.2s, box-shadow 0.2s;
+        }
+        .cint-success a:hover {
+            background: linear-gradient(90deg, #00c6fb 0%, #277bf5 100%);
+            box-shadow: 0 4px 16px 0 rgba(39,123,245,0.18);
+        }
+        @media (max-width: 600px) {
+            .cint-form-card, .cint-success {
+                max-width: 97vw;
+                padding: 18px 6vw;
+            }
+            .cint-header {
+                font-size: 1.3rem;
+                padding: 18px 0 12px 0;
+            }
+        }
+    </style>
 </head>
 <body>
-    <h1>Upload Excel File</h1>
-    <form method="post" enctype="multipart/form-data">
+    <div class="cint-header">
+        CustQuals Processor
+    </div>
+    <div class="cint-subtitle">
+        Upload your Excel file downloaded from
+        <a href="http://reports.lucidhq.com/Reports/report/Platform%20Ops/Custom%20Quals%20New%20Past%2024%20Hours"
+           target="_blank" style="color:#277bf5; text-decoration:underline; font-weight:600;">
+           SSRS</a>.
+    </div>
+    <form class="cint-form-card" method="post" enctype="multipart/form-data" action="/">
         <input type="file" name="file" accept=".xlsx" required>
         <button type="submit">Upload & Process</button>
+        {% if processed %}
+        <div id="after-upload-section">
+            <div class="cint-success" style="margin:0;box-shadow:none;background:transparent;padding:0;">
+                <h2 style="margin-top:24px;">File processed successfully.</h2>
+                <a href="/download">Download Processed File</a>
+                <a href="/review">Review/Edit Data</a>
+            </div>
+        </div>
+        {% endif %}
     </form>
+    <script>
+        // Hide after-upload-section on initial load if not processed
+        document.addEventListener('DOMContentLoaded', function() {
+            var afterUpload = document.getElementById('after-upload-section');
+            if (afterUpload) {
+                afterUpload.style.display = '';
+            }
+        });
+    </script>
 </body>
 </html>
