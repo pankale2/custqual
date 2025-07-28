@@ -2,132 +2,607 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Excel Processor</title>
-    <link rel="stylesheet" href="/static/cint.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CustQuals Processor</title>
     <style>
-        body {
-            background: #f7f8fa;
-            font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
-            color: #22223b;
+        :root {
+            --primary-blue: #277bf5;
+            --secondary-blue: #00c6fb;
+            --background: #f7f8fa;
+            --text-dark: #22223b;
+            --text-light: #6b7280;
+            --border-light: #e5e7eb;
+            --success-green: #10b981;
+            --card-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
             margin: 0;
             padding: 0;
+            box-sizing: border-box;
         }
-        .cint-header {
-            background: linear-gradient(90deg, #277bf5 0%, #00c6fb 100%);
-            color: #fff;
-            padding: 32px 0 24px 0;
-            text-align: center;
-            font-size: 2.2rem;
-            font-weight: 700;
-            letter-spacing: 0.5px;
-            box-shadow: 0 2px 12px 0 rgba(39,123,245,0.08);
-        }
-        .cint-subtitle {
-            color: #277bf5;
-            font-size: 1.2rem;
-            font-weight: 500;
-            text-align: center;
-            margin-top: 12px;
-            margin-bottom: 32px;
-        }
-        .cint-form-card {
-            background: #fff;
-            max-width: 420px;
-            margin: 40px auto 0 auto;
-            padding: 36px 32px 28px 32px;
-            border-radius: 18px;
-            box-shadow: 0 4px 24px 0 rgba(39,123,245,0.10);
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--background);
+            color: var(--text-dark);
+            line-height: 1.6;
+            min-height: 100vh;
             display: flex;
             flex-direction: column;
-            align-items: center;
         }
-        .cint-form-card input[type="file"] {
-            margin-bottom: 22px;
-            font-size: 1rem;
-            color: #22223b;
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, var(--primary-blue) 0%, var(--secondary-blue) 100%);
+            color: white;
+            text-align: center;
+            padding: 4rem 2rem 3rem;
+            position: relative;
+            overflow: hidden;
         }
-        .cint-form-card button {
-            background: linear-gradient(90deg, #277bf5 0%, #00c6fb 100%);
-            color: #fff;
-            font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M 10 0 L 0 0 0 10" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="1"/></pattern></defs><rect width="100" height="100" fill="url(%23grid)"/></svg>');
+            pointer-events: none;
+        }
+
+        .header-content {
+            position: relative;
+            z-index: 1;
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            font-weight: 800;
+            margin-bottom: 1rem;
+            letter-spacing: -0.025em;
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .header a {
+            color: white;
+            text-decoration: underline;
             font-weight: 600;
-            font-size: 1.1rem;
-            border: none;
-            border-radius: 8px;
-            padding: 12px 32px;
-            cursor: pointer;
-            box-shadow: 0 2px 8px 0 rgba(39,123,245,0.10);
-            transition: background 0.2s, box-shadow 0.2s;
+            transition: var(--transition);
         }
-        .cint-form-card button:hover {
-            background: linear-gradient(90deg, #00c6fb 0%, #277bf5 100%);
-            box-shadow: 0 4px 16px 0 rgba(39,123,245,0.18);
+
+        .header a:hover {
+            opacity: 0.8;
+            text-decoration: none;
         }
-        .cint-success {
-            background: #eaf1fb;
-            border-radius: 12px;
-            margin: 36px auto 0 auto;
-            max-width: 420px;
-            padding: 24px 28px 20px 28px;
-            box-shadow: 0 2px 8px 0 rgba(39,123,245,0.07);
+
+        /* Main Content */
+        .main {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 3rem 1rem;
+        }
+
+        .upload-card {
+            background: white;
+            border-radius: 24px;
+            box-shadow: var(--card-shadow);
+            width: 100%;
+            max-width: 600px;
+            overflow: hidden;
+            transition: var(--transition);
+        }
+
+        .upload-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        }
+
+        .card-header {
+            padding: 2rem 2rem 1rem;
             text-align: center;
         }
-        .cint-success h2 {
-            color: #277bf5;
-            font-size: 1.3rem;
+
+        .card-header h2 {
+            font-size: 1.5rem;
             font-weight: 700;
-            margin: 0 0 12px 0;
+            margin-bottom: 0.5rem;
+            color: var(--text-dark);
         }
-        .cint-success a {
-            display: inline-block;
-            margin: 8px 12px 0 12px;
-            color: #fff;
-            background: linear-gradient(90deg, #277bf5 0%, #00c6fb 100%);
-            padding: 8px 22px;
-            border-radius: 6px;
+
+        .card-header p {
+            color: var(--text-light);
+            font-size: 0.95rem;
+        }
+
+        /* Upload Area */
+        .upload-area {
+            margin: 1rem 2rem 2rem;
+            border: 2px dashed var(--border-light);
+            border-radius: 16px;
+            padding: 3rem 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: var(--transition);
+            position: relative;
+            background: #fafbfc;
+        }
+
+        .upload-area:hover,
+        .upload-area.dragover {
+            border-color: var(--primary-blue);
+            background: rgba(39, 123, 245, 0.02);
+            transform: scale(1.01);
+        }
+
+        .upload-icon {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 1.5rem;
+            background: linear-gradient(135deg, var(--primary-blue), var(--secondary-blue));
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            transition: var(--transition);
+        }
+
+        .upload-area:hover .upload-icon {
+            transform: scale(1.1) rotate(5deg);
+        }
+
+        .upload-text h3 {
+            font-size: 1.25rem;
             font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--text-dark);
+        }
+
+        .upload-text p {
+            color: var(--text-light);
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+        }
+
+        .file-input {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        .file-types {
+            display: inline-block;
+            background: rgba(39, 123, 245, 0.1);
+            color: var(--primary-blue);
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        /* File Preview */
+        .file-preview {
+            display: none;
+            margin: 1rem 2rem;
+            padding: 1rem;
+            background: #f8fafc;
+            border-radius: 12px;
+            border: 1px solid var(--border-light);
+        }
+
+        .file-preview.show {
+            display: flex;
+            align-items: center;
+            animation: slideIn 0.3s ease;
+        }
+
+        .file-icon {
+            width: 48px;
+            height: 48px;
+            background: var(--primary-blue);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.2rem;
+            margin-right: 1rem;
+            flex-shrink: 0;
+        }
+
+        .file-details {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .file-name {
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: var(--text-dark);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .file-size {
+            font-size: 0.8rem;
+            color: var(--text-light);
+            margin-top: 0.25rem;
+        }
+
+        .remove-file {
+            background: none;
+            border: none;
+            color: var(--text-light);
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 8px;
+            transition: var(--transition);
+        }
+
+        .remove-file:hover {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+
+        /* Submit Button */
+        .submit-section {
+            padding: 0 2rem 2rem;
+        }
+
+        .submit-btn {
+            width: 100%;
+            background: linear-gradient(135deg, var(--primary-blue), var(--secondary-blue));
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 1rem 2rem;
             font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(39, 123, 245, 0.3);
+        }
+
+        .submit-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-text {
+            transition: var(--transition);
+        }
+
+        .submit-btn.loading .btn-text {
+            opacity: 0;
+        }
+
+        .loading-spinner {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top: 2px solid white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            opacity: 0;
+            transition: var(--transition);
+        }
+
+        .submit-btn.loading .loading-spinner {
+            opacity: 1;
+        }
+
+        /* Success Section */
+        .success-section {
+            padding: 2rem;
+            text-align: center;
+            animation: fadeInUp 0.6s ease;
+        }
+
+        .success-icon {
+            width: 80px;
+            height: 80px;
+            background: var(--success-green);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.5rem;
+            color: white;
+            font-size: 2rem;
+            animation: bounce 0.6s ease;
+        }
+
+        .success-section h3 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin-bottom: 1rem;
+        }
+
+        .download-btn {
+            display: inline-block;
+            background: linear-gradient(135deg, var(--success-green), #059669);
+            color: white;
             text-decoration: none;
-            box-shadow: 0 2px 8px 0 rgba(39,123,245,0.10);
-            transition: background 0.2s, box-shadow 0.2s;
+            padding: 1rem 2rem;
+            border-radius: 12px;
+            font-weight: 600;
+            transition: var(--transition);
         }
-        .cint-success a:hover {
-            background: linear-gradient(90deg, #00c6fb 0%, #277bf5 100%);
-            box-shadow: 0 4px 16px 0 rgba(39,123,245,0.18);
+
+        .download-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(16, 185, 129, 0.3);
         }
-        @media (max-width: 600px) {
-            .cint-form-card, .cint-success {
-                max-width: 97vw;
-                padding: 18px 6vw;
+
+        /* Animations */
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
             }
-            .cint-header {
-                font-size: 1.3rem;
-                padding: 18px 0 12px 0;
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes bounce {
+            0%, 20%, 53%, 80%, 100% {
+                transform: translateY(0);
+            }
+            40%, 43% {
+                transform: translateY(-10px);
+            }
+            70% {
+                transform: translateY(-5px);
+            }
+            90% {
+                transform: translateY(-2px);
+            }
+        }
+
+        @keyframes spin {
+            0% { transform: translate(-50%, -50%) rotate(0deg); }
+            100% { transform: translate(-50%, -50%) rotate(360deg); }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .header {
+                padding: 3rem 1rem 2rem;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .header p {
+                font-size: 1rem;
+            }
+
+            .upload-card {
+                margin: 1rem;
+            }
+
+            .upload-area {
+                padding: 2rem 1rem;
+            }
+
+            .upload-icon {
+                width: 60px;
+                height: 60px;
+                font-size: 1.5rem;
             }
         }
     </style>
 </head>
 <body>
-    <div class="cint-header">
-        CustQuals Processor
-    </div>
-    <div class="cint-subtitle">
-        Upload your Excel file downloaded from
-        <a href="http://reports.lucidhq.com/Reports/report/Platform%20Ops/Custom%20Quals%20New%20Past%2024%20Hours"
-           target="_blank" style="color:#277bf5; text-decoration:underline; font-weight:600;">
-           SSRS</a>.
-    </div>
-    <form class="cint-form-card" method="post" enctype="multipart/form-data" action="/">
-        <input type="file" name="file" accept=".xlsx" required>
-        <button type="submit">Upload & Process</button>
-        {% if processed %}
-        <div id="after-upload-section">
-            <div class="cint-success" style="margin:0;box-shadow:none;background:transparent;padding:0;">
-                <h2 style="margin-top:24px;">File processed successfully.</h2>
-                <a href="/download">Download Processed File</a>
-            </div>
+    <header class="header">
+        <div class="header-content">
+            <h1>CustQuals Processor</h1>
+            <p>
+                Upload your Excel file downloaded from
+                <a href="http://reports.lucidhq.com/Reports/report/Platform%20Ops/Custom%20Quals%20New%20Past%2024%20Hours" target="_blank">SSRS</a>
+            </p>
         </div>
-        {% endif %}
-    </form>
+    </header>
+
+    <main class="main">
+        <div class="upload-card">
+            {% if not processed %}
+            <div class="card-header">
+                <h2>Process Your Data</h2>
+                <p>Upload your Excel file to automatically format and analyze your custom qualifications data</p>
+            </div>
+
+            <form method="post" enctype="multipart/form-data" action="/" id="upload-form">
+                <div class="upload-area" id="upload-area">
+                    <div class="upload-icon">📊</div>
+                    <div class="upload-text">
+                        <h3>Drag & drop your file here</h3>
+                        <p>or click to browse your computer</p>
+                        <span class="file-types">Excel files (.xlsx)</span>
+                    </div>
+                    <input type="file" name="file" class="file-input" accept=".xlsx" required id="file-input">
+                </div>
+
+                <div class="file-preview" id="file-preview">
+                    <div class="file-icon">📄</div>
+                    <div class="file-details">
+                        <div class="file-name" id="file-name"></div>
+                        <div class="file-size" id="file-size"></div>
+                    </div>
+                    <button type="button" class="remove-file" id="remove-file">✕</button>
+                </div>
+
+                <div class="submit-section">
+                    <button type="submit" class="submit-btn" id="submit-btn">
+                        <span class="btn-text">Process File</span>
+                        <div class="loading-spinner"></div>
+                    </button>
+                </div>
+            </form>
+            {% else %}
+            <div class="success-section">
+                <div class="success-icon">✓</div>
+                <h3>File processed successfully!</h3>
+                <a href="/download" id="download-link" class="download-btn">Download Processed File</a>
+            </div>
+            {% endif %}
+        </div>
+    </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const uploadArea = document.getElementById('upload-area');
+            const fileInput = document.getElementById('file-input');
+            const filePreview = document.getElementById('file-preview');
+            const fileName = document.getElementById('file-name');
+            const fileSize = document.getElementById('file-size');
+            const removeFile = document.getElementById('remove-file');
+            const submitBtn = document.getElementById('submit-btn');
+            const uploadForm = document.getElementById('upload-form');
+
+            // Prevent default drag behaviors
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                uploadArea.addEventListener(eventName, preventDefaults, false);
+                document.body.addEventListener(eventName, preventDefaults, false);
+            });
+
+            // Highlight drop area when item is dragged over it
+            ['dragenter', 'dragover'].forEach(eventName => {
+                uploadArea.addEventListener(eventName, highlight, false);
+            });
+
+            ['dragleave', 'drop'].forEach(eventName => {
+                uploadArea.addEventListener(eventName, unhighlight, false);
+            });
+
+            // Handle dropped files
+            uploadArea.addEventListener('drop', handleDrop, false);
+            fileInput.addEventListener('change', handleFiles);
+            removeFile.addEventListener('click', clearFile);
+
+            // Form submission with loading state
+            uploadForm.addEventListener('submit', function(e) {
+                if (!fileInput.files.length) {
+                    e.preventDefault();
+                    return;
+                }
+                
+                submitBtn.classList.add('loading');
+                submitBtn.disabled = true;
+            });
+
+            function preventDefaults(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+
+            function highlight() {
+                uploadArea.classList.add('dragover');
+            }
+
+            function unhighlight() {
+                uploadArea.classList.remove('dragover');
+            }
+
+            function handleDrop(e) {
+                const dt = e.dataTransfer;
+                const files = dt.files;
+                
+                if (files.length) {
+                    fileInput.files = files;
+                    handleFiles();
+                }
+            }
+
+            function handleFiles() {
+                if (fileInput.files.length) {
+                    const file = fileInput.files[0];
+                    
+                    // Validate file type
+                    if (!file.name.toLowerCase().endsWith('.xlsx')) {
+                        alert('Please select an Excel file (.xlsx)');
+                        clearFile();
+                        return;
+                    }
+                    
+                    displayFileInfo(file);
+                }
+            }
+
+            function displayFileInfo(file) {
+                fileName.textContent = file.name;
+                fileSize.textContent = formatFileSize(file.size);
+                filePreview.classList.add('show');
+                uploadArea.style.display = 'none';
+            }
+
+            function clearFile() {
+                fileInput.value = '';
+                filePreview.classList.remove('show');
+                uploadArea.style.display = 'block';
+            }
+
+            function formatFileSize(bytes) {
+                if (bytes === 0) return '0 Bytes';
+                const k = 1024;
+                const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+                const i = Math.floor(Math.log(bytes) / Math.log(k));
+                return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+            }
+
+            // Auto-download functionality
+            {% if processed %}
+            const downloadLink = document.getElementById('download-link');
+            if (downloadLink) {
+                setTimeout(function() {
+                    downloadLink.click();
+                }, 500);
+            }
+            {% endif %}
+        });
+    </script>
 </body>
 </html>
