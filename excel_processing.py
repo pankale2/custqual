@@ -63,13 +63,13 @@ def advanced_process_excel_memory(input_data):
     
     # Set Feedback/Recommendation based on language logic
     if all(col in df.columns for col in ['COUNTRY LANGUAGE', 'QUESTION TEXT LANGUAGE', 'Feedback', 'Recommendation']):
-        mask_non_english = ~df['COUNTRY LANGUAGE'].astype(str).str.startswith('English')
+        mask_non_english = ~df['COUNTRY LANGUAGE'].astype(str).str.endswith('-ENG')
         mask_qtext_english = df['QUESTION TEXT LANGUAGE'] == 'en'
-        # Where COUNTRY LANGUAGE doesn't start with English and QUESTION TEXT is English
+        # Where COUNTRY LANGUAGE doesn't end with -ENG and QUESTION TEXT is English
         mask_translate = mask_non_english & mask_qtext_english
         df.loc[mask_translate, 'Feedback'] = 'Language Translation Required'
         df.loc[mask_translate, 'Recommendation'] = 'Translate into correct Language'
-        # Where COUNTRY LANGUAGE doesn't start with English and QUESTION TEXT is not English
+        # Where COUNTRY LANGUAGE doesn't end with -ENG and QUESTION TEXT is not English
         mask_ok = mask_non_english & ~mask_qtext_english
         df.loc[mask_ok, 'Feedback'] = 'OK'
         df.loc[mask_ok, 'Recommendation'] = 'OK'
@@ -225,13 +225,13 @@ def advanced_process_excel(input_path, output_path):
     
     # Set Feedback/Recommendation based on language logic
     if all(col in df.columns for col in ['COUNTRY LANGUAGE', 'QUESTION TEXT LANGUAGE', 'Feedback', 'Recommendation']):
-        mask_non_english = ~df['COUNTRY LANGUAGE'].astype(str).str.startswith('English')
+        mask_non_english = ~df['COUNTRY LANGUAGE'].astype(str).str.endswith('-ENG')
         mask_qtext_english = df['QUESTION TEXT LANGUAGE'] == 'en'
-        # Where COUNTRY LANGUAGE doesn't start with English and QUESTION TEXT is English
+        # Where COUNTRY LANGUAGE doesn't end with -ENG and QUESTION TEXT is English
         mask_translate = mask_non_english & mask_qtext_english
         df.loc[mask_translate, 'Feedback'] = 'Language Translation Required'
         df.loc[mask_translate, 'Recommendation'] = 'Translate into correct Language'
-        # Where COUNTRY LANGUAGE doesn't start with English and QUESTION TEXT is not English
+        # Where COUNTRY LANGUAGE doesn't end with -ENG and QUESTION TEXT is not English
         mask_ok = mask_non_english & ~mask_qtext_english
         df.loc[mask_ok, 'Feedback'] = 'OK'
         df.loc[mask_ok, 'Recommendation'] = 'OK'

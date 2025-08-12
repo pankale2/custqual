@@ -594,14 +594,15 @@
             }
 
             // Auto-download functionality
-            {% if processed %}
-            const downloadLink = document.getElementById('download-link');
-            if (downloadLink) {
-                setTimeout(function() {
-                    downloadLink.click();
-                }, 500);
+            var processed = "{{ 'true' if processed else 'false' }}";
+            if (processed) {
+                const downloadLink = document.getElementById('download-link');
+                if (downloadLink) {
+                    setTimeout(function() {
+                        downloadLink.click();
+                    }, 500);
+                }
             }
-            {% endif %}
         });
     </script>
 </body>
