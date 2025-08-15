@@ -1,9 +1,12 @@
 # GitHub Copilot Instructions for CustQuals Processor
 
-- After th eprompt is provided, do not directly make changes to the code or project files.
+- After the prompt is provided, do not directly make changes to the code or project files.
 - Provide the plan first. Ask any queries or confusions or difficult choices.
-- Always ask before removing any code that can remove any existing functionality. 
+- Always ask before removing any code that can remove any existing functionality.
 
+After every prompt, instead of making changes directly, please confirm the understanding, let me know the implementation plan and any descripancies you may encounter. 
+Make sure existing logic, formulas, functionality remains intact after renaming of columns. 
+Ask any queries, confirmations, confusions.
 
 ## Project Overview
 This is a Flask web application that processes Excel files from SSRS containing custom qualification data. The app:
@@ -24,7 +27,7 @@ This is a Flask web application that processes Excel files from SSRS containing 
 - **app.py**: Main Flask application with routes and web server
 - **excel_processing.py**: Excel processing functions (pandas/openpyxl)
 - **templates/**: HTML templates using Jinja2
-- **static/**: CSS and other static assets
+- **static/**: CSS and other static assets (optional, only include if present)
 - **.github/**: GitHub and Copilot configuration
 
 ## Excel Processing Guidelines
@@ -34,6 +37,7 @@ This is a Flask web application that processes Excel files from SSRS containing 
 - Freeze header rows and apply autofilter for better user experience
 - Set appropriate column widths based on content type
 - Format dates consistently (YYYY-MM-DD)
+- For language detection, 'COUNTRY LANGUAGE' is checked using `.str.endswith('-ENG')`
 
 ## UI Guidelines
 - Use the established color scheme:
@@ -43,6 +47,7 @@ This is a Flask web application that processes Excel files from SSRS containing 
 - Keep the interface clean and minimal
 - Ensure responsive design for different screen sizes
 - Add subtle animations for better user feedback
+- When mixing Jinja variables and JavaScript, always quote and parse variables for JS safety
 
 ## Testing Considerations
 - Consider edge cases with different Excel file formats
@@ -53,4 +58,7 @@ This is a Flask web application that processes Excel files from SSRS containing 
 ## Deployment
 - Package as executable using PyInstaller
 - Ensure all dependencies are properly included
+- Only add folders (e.g., static, templates) to PyInstaller if they exist
 - Maintain in-memory processing to avoid file system permission issues
+
+

@@ -1,25 +1,12 @@
 # -*- mode: python ; coding: utf-8 -*-
 
+
 a = Analysis(
     ['app.py'],
-    pathex=['.'],
+    pathex=[],
     binaries=[],
-    datas=[
-        ('templates', 'templates'),
-        ('excel_processing.py', '.')
-    ],
-    hiddenimports=[
-        'pandas',
-        'openpyxl',
-        'langdetect',
-        'flask',
-        'werkzeug',
-        'jinja2',
-        'markupsafe',
-        'itsdangerous',
-        'click',
-        'blinker'
-    ],
+    datas=[('templates', 'templates'), ('static', 'static')],
+    hiddenimports=[],
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
@@ -27,7 +14,6 @@ a = Analysis(
     noarchive=False,
     optimize=0,
 )
-
 pyz = PYZ(a.pure)
 
 exe = EXE(
