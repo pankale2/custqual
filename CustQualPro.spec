@@ -2,10 +2,10 @@
 
 
 a = Analysis(
-    ['app.py'],
+    ['run.py'],
     pathex=[],
     binaries=[],
-    datas=[('templates', 'templates'), ('static', 'static')],
+    datas=[('templates', 'templates'), ('excel_processing.py', '.')],  # add excel_processing.py as a data file
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},

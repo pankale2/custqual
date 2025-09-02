@@ -127,13 +127,24 @@
 				<div>
 					<div class="title">CustQuals Processor</div>
 					<div class="lead">Upload and process custom qual Excel files</div>
+					
 				</div>
 				<div style="text-align: right;">
 					<a class="ssrs" href="http://reports.lucidhq.com/Reports/report/Platform%20Ops/Custom%20Quals%20New%20Past%2024%20Hours" target="_blank" rel="noopener">SSRS Custom Quals</a></br>
                     <a class="ssrs" href="https://cintgroup.lightning.force.com/lightning/n/Data_Uploader" target="_blank" rel="noopener">SF Data Uploader</a>
 				</div>
 			</div>
-
+			<div class="small" style="margin-top:4px; text-align: center;">
+				User: <b>{{ username }}</b>
+				<span style="margin-left:12px;">
+					SF OwnerId:
+					{% if sf_owner_id != "SF ID Unknown" %}
+						<a href="https://cintgroup.lightning.force.com/lightning/r/User/{{ sf_owner_id }}/view" target="_blank" style="font-weight:bold;">{{ sf_owner_id }}</a>
+					{% else %}
+						<b>{{ sf_owner_id }}</b>
+					{% endif %}
+				</span>
+			</div>
 			<section class="card" aria-labelledby="processTitle">
 				<label class="upload" id="uploadArea" aria-describedby="uploadHelp" role="button" tabindex="0">					
 					<div class="h3">Drop file here or click to browse</div>
@@ -156,50 +167,48 @@
 
 				<!-- NEW: Processing info -->
 				<section class="info-card" aria-labelledby="infoTitle">
-	<h3 id="infoTitle"></h3>
-	<details class="info-more">
-		<summary>See <u>what happens to your file</u> after uploaded on this page!</summary>
-		<ul>
-			<li>Format the sheet to help further manual review of questions.
-				<ul>
-					<li>Clean extra rows/columns (e.g., first 4 rows, Lucid logo, empty columns, ACCOUNT ID, BUSINESS UNIT*, REGION, CSM EMAIL, etc).</li>
-					<li>Unmerge cells.</li>
-					<li>Disable word wrap.</li>
-					<li>Set column widths.</li>
-					<li>Format specific columns as necessary</li>
-					<li>Apply color‑scale conditional formatting to specific columns</li>
-					<li>Apply auto-filter</li>
-					<li>Freeze first row</li>
-					<li>Enable dropdown for "Required_Action__c" & "Setup_Issue__c" columns</li>
-					<li>Sort rows optimally to ease further review.</li>
-					<li>Add formula in last column which showing <code>% progress</code>.</li>
-					<li>Update <code>DATE FLAGGED</code> to the current timestamp for all rows.</li>
-					<li>Format <code>Custom_Create_Date__c</code> as <code>yyyy-mm-dd</code>.</li>
-				</ul>
-			</li>
-			<li>Only for NON-ENGLISH rows: if the text is English, set Feedback to "Language Translation Required", otherwise mark as OK.</li>
-			<li>Prepare the sheet to match SF upload format e.g., Renaming the columns (SURVEY ID → Survey_Number__c, QUESTION TEXT → Custom_Flagged__c), setting Lucid_Action__c to "Not Paused". etc.)</li>
-			<li>Return the processed file (existing file name maintained, just added <code>timestamp</code> to the end).</li>
-		</ul>
-	</details>
-	<details class="info-more">
-		<summary>Next <u>steps to be performed MANUALLY</u> on the file received from here...</summary>
-		<ol>
-			<li>Verify the non-english rows if assessed correctly.</li>
-			<li>Review the remaining english questions and update <code>Feedback__c</code>, <code>Recommendation__c</code>, <code>Setup_Issue__c</code> columns.</li>
-			<li>Fill <code>OwnerId</code> column with your SF user code.</li>
-			<li>After you have completed your review, delete the <code>[D]OPTION TEXT</code>, <code>[D]ANSPRECODE</code>, <code>last %</code> columns.</li>
-            <li>
-				Save the file and upload to the 
-				<a href="https://cintgroup.lightning.force.com/lightning/n/Data_Uploader" target="_blank" rel="noopener">SF data uploader</a> to create Custom Quals cases on SF.
-			</li>
-		</ol>
-	</details>
-</section>
+					<h3 id="infoTitle"></h3>
+					<details class="info-more">
+					<summary>See <u>what happens to your file</u> after uploaded on this page!</summary>
+					<ul>
+						<li>Format the sheet to help further manual review of questions.
+							<ul>
+								<li>Clean extra rows/columns (e.g., first 4 rows, Lucid logo, empty columns, ACCOUNT ID, BUSINESS UNIT*, REGION, CSM EMAIL, etc).</li>
+								<li>Unmerge cells.</li>
+								<li>Disable word wrap.</li>
+								<li>Set column widths.</li>
+								<li>Format specific columns as necessary</li>
+								<li>Apply color‑scale conditional formatting to specific columns</li>
+								<li>Apply auto-filter</li>
+								<li>Freeze first row</li>
+								<li>Enable dropdown for "Required_Action__c" & "Setup_Issue__c" columns</li>
+								<li>Sort rows optimally to ease further review.</li>
+								<li>Add formula in last column which showing <code>% progress</code>.</li>
+								<li>Update <code>DATE FLAGGED</code> to the current timestamp for all rows.</li>
+								<li>Format <code>Custom_Create_Date__c</code> as <code>yyyy-mm-dd</code>.</li>
+							</ul>
+						</li>
+						<li>Only for NON-ENGLISH rows: if the text is English, set Feedback to "Language Translation Required", otherwise mark as OK.</li>
+						<li>Prepare the sheet to match SF upload format e.g., Renaming the columns (SURVEY ID → Survey_Number__c, QUESTION TEXT → Custom_Flagged__c), setting Lucid_Action__c to "Not Paused". etc.)</li>
+						<li>Return the processed file (existing file name maintained, just added <code>timestamp</code> to the end).</li>
+					</ul>
+				</details>
+				<details class="info-more">
+					<summary>Next <u>steps to be performed MANUALLY</u> on the file received from here...</summary>
+					<ol>
+						<li>Verify the non-english rows if assessed correctly.</li>
+						<li>Review the remaining english questions and update <code>Feedback__c</code>, <code>Recommendation__c</code>, <code>Setup_Issue__c</code> columns.</li>
+						<li>Check <code>OwnerId</code> column if filled with correct SF user code. Update if necessary.</li>
+						<li>After you have completed your review, delete the <code>[D]OPTION TEXT</code>, <code>[D]ANSPRECODE</code>, <code>last %</code> columns.</li>
+						<li>
+							Save the file and upload to the 
+							<a href="https://cintgroup.lightning.force.com/lightning/n/Data_Uploader" target="_blank" rel="noopener">SF data uploader</a> to create Custom Quals cases on SF.
+						</li>
+					</ol>
+				</details>	
 			</section>
 		</main>
 	</div>
-
 	<script>
 		(function(){
 			// Elements
