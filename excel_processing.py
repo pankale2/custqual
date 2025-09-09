@@ -10,62 +10,79 @@ import datetime
 from langdetect import detect, LangDetectException
 import io
 
+DEBUG_MODE = True  # Set to False to disable debug prints
+
+def debug_print(message, extra_info=""):
+    if DEBUG_MODE:
+        timestamp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        print(f"DEBUG [{timestamp}] {message}{extra_info}")
+
 def advanced_process_excel_memory(input_data, sf_owner_id=None):
     """
     Process Excel file entirely in memory without touching disk
     """
     # Read from bytes data
     df = pd.read_excel(io.BytesIO(input_data), skiprows=4)
-    
+    debug_print("File read and rows skipped", f" (Rows: {df.shape[0]})")
+
     # Drop empty columns
     df = df.dropna(axis=1, how='all')
-    
-    # Build final column order (required, added, kept) - updated for new input format
-    preferred_order = [
-        'Survey_Number__c', 'ACCOUNT NAME', 'CSM OWNER NAME', 'Project_Manager__c', 'Project_Manager_Email__c',
-        'Date_Flagged__c', 'Question_Type__c', 'Question_Visibility__c', 'Custom_Create_Date__c', 'Country_Language__c',
-        'QuestionID__c', 'Required_Action__c', 'QuestionName__c', 'Custom_Flagged__c', 'Recommendation__c',
-        '[D]ANSPRECODE', '[D]OPTION TEXT',
-        'Buyer_Account__c', 'CSM_Name__c', 'Name',
-        'Lucid_Action__c', 'OwnerId'  # <-- new columns
+    debug_print("Empty columns dropped", f" (Columns: {df.shape[1]})")
+
+    # Define the strict output column order (as required in output)
+    strict_order = [
+        'Name',
+        'Buyer_Account__c',
+        'CSM_Name__c',
+        'Project_Manager__c',
+        'Project_Manager_Email__c',
+        'Date_Flagged__c',
+        'Question_Visibility__c',
+        'Custom_Create_Date__c',
+        'Lucid_Action__c',
+        'OwnerId',
+        'Survey_Number__c',
+        'Question_Type__c',
+        'Country_Language__c',
+        'QuestionID__c',
+        'Required_Action__c',
+        'Setup_Issue__c',
+        'Recommendation__c',
+        'QuestionName__c',
+        'Custom_Flagged__c',
+        '[D]ANSPRECODE',
+        '[D]OPTION TEXT'
     ]
-    
-    # Remove unwanted columns and ensure all preferred columns exist
-    df.columns = df.columns.str.strip()
-    cols_to_remove = [
-        'ACCOUNT ID', 'ACCOUNT NAME', 'BUSINESS UNIT ID', 'BUSINESS UNIT NAME',
-        'REGION', 'CSM_Name__c', 'CSM EMAIL', 'CSM OWNER NAME', 'DATE/TIME CREATED'
-        # Keep: Buyer_Account__c, Name
-    ]
-    # Remove unwanted columns except those to keep
-    cols_to_remove = [col for col in cols_to_remove if col not in ['Buyer_Account__c', 'Name']]
-    df = df.drop(columns=[col for col in cols_to_remove if col in df.columns], errors='ignore')
-    for col in preferred_order:
+
+    # Rename input columns to match strict output names if needed
+    rename_map = {
+        'ANSWER PRECODE': '[D]ANSPRECODE',
+        'ANSWER OPTION TEXT': '[D]OPTION TEXT'
+    }
+    df = df.rename(columns=rename_map)
+    # Only keep columns that are in the strict_order, drop all others
+    df = df[[col for col in df.columns if col in strict_order or col in rename_map.values()]]
+    # Add any missing columns as empty
+    for col in strict_order:
         if col not in df.columns:
             df[col] = ''
-    
-    # Check for critical columns and raise error if missing
-    critical_cols = ['QuestionID__c', 'Custom_Flagged__c', 'Country_Language__c']
-    missing_critical = [col for col in critical_cols if col not in df.columns]
-    if missing_critical:
-        raise ValueError(f"Critical columns missing: {', '.join(missing_critical)}. Cannot proceed with processing.")
-    
+    # Reindex to strict order
+    df = df[strict_order]
+    debug_print("Columns aligned to strict output order", f" (Rows: {df.shape[0]}, Columns: {df.shape[1]})")
+
     # Fill DATE FLAGGED with current system date for all rows
     now_str = datetime.datetime.now().strftime('%Y-%m-%dT%H:%M:%S')
-    if 'Date_Flagged__c' in df.columns:
-        df['Date_Flagged__c'] = now_str
+    df['Date_Flagged__c'] = now_str
+    debug_print("Filled DATE FLAGGED with current system date for all rows", f" (Rows: {df.shape[0]})")
+
+    # Fill Lucid_Action__c with 'Not Paused'
+    df['Lucid_Action__c'] = 'Not Paused'
     
-    # Reindex to final order
-    final_cols = [col for col in preferred_order if col in df.columns]
-    df = df[final_cols]
-    
-    # Sort once by all keys present - updated for new column names
-    sort_keys = [col for col in ['QuestionID__c', 'Survey_Number__c', '[D]ANSPRECODE'] if col in df.columns]
-    if sort_keys:
-        df = df.sort_values(by=sort_keys, kind='stable')
-    
+    # Fill OwnerId column with SF OwnerId if provided, else leave blank
+    if 'OwnerId' in df.columns:
+        df['OwnerId'] = sf_owner_id if sf_owner_id else ''
+
     # Detect language for each cell in 'Custom_Flagged__c' column and add a new column 'QUESTION TEXT LANGUAGE'
-    # Skip if non-text data
     if 'Custom_Flagged__c' in df.columns:
         def detect_lang_safe(text):
             try:
@@ -75,89 +92,43 @@ def advanced_process_excel_memory(input_data, sf_owner_id=None):
             except (LangDetectException, TypeError):
                 return ''
         df['QUESTION TEXT LANGUAGE'] = df['Custom_Flagged__c'].apply(detect_lang_safe)
-    
-    # Set Feedback/Recommendation based on language logic - always override
-    if all(col in df.columns for col in ['Country_Language__c', 'QUESTION TEXT LANGUAGE', 'Required_Action__c', 'Recommendation__c']):
+    debug_print("Language detection completed", f" (Rows: {df.shape[0]})")
+
+    # Set Feedback/Recommendation/Setup_Issue__c based on language logic - always override
+    if all(col in df.columns for col in ['Country_Language__c', 'QUESTION TEXT LANGUAGE', 'Required_Action__c', 'Recommendation__c', 'Setup_Issue__c']):
         mask_non_english = ~df['Country_Language__c'].astype(str).str.startswith('English')
         mask_qtext_english = df['QUESTION TEXT LANGUAGE'] == 'en'
         # Where COUNTRY LANGUAGE doesn't start with English and QUESTION TEXT is English
         mask_translate = mask_non_english & mask_qtext_english
         df.loc[mask_translate, 'Required_Action__c'] = 'Language Translation Required'
         df.loc[mask_translate, 'Recommendation__c'] = 'Translate into correct Language'
+        df.loc[mask_translate, 'Setup_Issue__c'] = 'Untranslated Text'
         # Where COUNTRY LANGUAGE doesn't start with English and QUESTION TEXT is not English
         mask_ok = mask_non_english & ~mask_qtext_english
-        df.loc[mask_ok, 'Required_Action__c'] = 'OK'
-        df.loc[mask_ok, 'Recommendation__c'] = 'OK'
-    
-    # Column rename mapping - updated for new input format
-    rename_map = {
-        'Name': 'Name',  # Already correct
-        'Survey_Number__c': 'Survey_Number__c',  # Already correct
-        'Project_Manager__c': 'Project_Manager__c',  # Already correct
-        'Project_Manager_Email__c': 'Project_Manager_Email__c',  # Already correct
-        'Date_Flagged__c': 'Date_Flagged__c',  # Already correct
-        'Question_Type__c': 'Question_Type__c',  # Already correct
-        'Question_Visibility__c': 'Question_Visibility__c',  # Already correct
-        'Custom_Create_Date__c': 'Custom_Create_Date__c',  # Already correct
-        'Country_Language__c': 'Country_Language__c',  # Already correct
-        'QuestionID__c': 'QuestionID__c',  # Already correct
-        'Required_Action__c': 'Required_Action__c',  # Already correct
-        'QuestionName__c': 'QuestionName__c',  # Already correct
-        'Custom_Flagged__c': 'Custom_Flagged__c',  # Already correct
-        'Recommendation__c': 'Recommendation__c',  # Already correct
-        'Buyer_Account__c': 'Buyer_Account__c',  # Already correct
-        'CSM_Name__c': 'CSM_Name__c',  # Already correct
-        'Lucid_Action__c': 'Setup_Issue__c',
-        '[D]ANSPRECODE': '[D]ANSPRECODE',  # Already correct
-        '[D]OPTION TEXT': '[D]OPTION TEXT'  # Already correct
-    }
-    # Rename columns
-    df = df.rename(columns=rename_map)
-    df['Lucid_Action__c'] = 'Not Paused'
-    # Pre-fill Setup_Issue__c with "--None--" for all rows
-    df['Setup_Issue__c'] = '--None--'
-    # Define strict output column order - unchanged
-    strict_order = [
-        'Name',
-        'Buyer_Account__c',
-        'CSM_Name__c',
-        'Project_Manager__c',
-        'Project_Manager_Email__c',
-        'Date_Flagged__c',
-        'Question_Visibility__c',
-        'Custom_Create_Date__c',
-        'Lucid_Action__c',
-        'OwnerId',
-        'Survey_Number__c',
-        'Question_Type__c',
-        'Country_Language__c',
-        'QuestionID__c',
-        'Required_Action__c',
-        'Recommendation__c',
-        'Setup_Issue__c',
-        'QuestionName__c',
-        'Custom_Flagged__c',
-        '[D]ANSPRECODE',
-        '[D]OPTION TEXT'
-    ]
-    # Ensure all columns in strict_order exist
-    for col in strict_order:
-        if col not in df.columns:
-            df[col] = ''
-    # Fill OwnerId column with SF OwnerId if provided, else leave blank
-    if 'OwnerId' in df.columns:
-        df['OwnerId'] = sf_owner_id if sf_owner_id else ''
-    # Reindex to strict order, drop all others except formula column
-    df = df[strict_order]
+        df.loc[mask_ok, 'Required_Action__c'] = '--None--'
+        df.loc[mask_ok, 'Recommendation__c'] = '--None--'
+        df.loc[mask_ok, 'Setup_Issue__c'] = '--None--'
+    debug_print("For non-English questions, Required_Action, Recommendation, Setup_Issue__c updated", f" (Rows: {df.shape[0]})")
+
+    # Sort by keys if present (after language logic)
+    sort_keys = [col for col in ['Required_Action__c','QuestionID__c', 'Survey_Number__c', '[D]ANSPRECODE'] if col in df.columns]
+    if sort_keys:
+        df = df.sort_values(by=sort_keys, kind='stable')
+    debug_print("Rows sorted to bring in order by QID.", f" (Rows: {df.shape[0]})")
+
+    # Drop 'QUESTION TEXT LANGUAGE' column before exporting
+    if 'QUESTION TEXT LANGUAGE' in df.columns:
+        df = df.drop(columns=['QUESTION TEXT LANGUAGE'])
     # Save to memory buffer instead of file
     output_buffer = io.BytesIO()
     df.to_excel(output_buffer, index=False, engine='openpyxl')
+    debug_print("Data saved to memory buffer as Excel")
     
     # Post-process with openpyxl in memory
     output_buffer.seek(0)
     wb = openpyxl.load_workbook(output_buffer)
     ws = wb.active
-
+    debug_print("Workbook loaded")
     # Disable word wrap, unmerge, set width
     for row in ws.iter_rows():
         for cell in row:
@@ -167,31 +138,29 @@ def advanced_process_excel_memory(input_data, sf_owner_id=None):
     for merged in list(ws.merged_cells.ranges):
         ws.unmerge_cells(str(merged))
 
+    debug_print("Formatting applied (Disabled wordwrap, cells unmerged)")
     # Clear any existing conditional formatting that might interfere
     while ws.conditional_formatting:
         ws.conditional_formatting._cf_rules.clear()
 
-    # Set custom column widths (supports renamed headers)
+    # debug_print(11, "Custom column widths set")
+    # Set custom column widths (supports output headers directly)
     orig_col_widths = {
-        'SURVEY ID': 9.57, 'ACCOUNT NAME': 9.57, 'CSM OWNER NAME': 9.57,
-        'PM WHO CREATED QUAL': 9.57, 'EMAIL': 9.57, 'DATE FLAGGED': 9.57,
-        'QUESTION TYPE': 9.57, 'QUESTION VISIBILITY': 4, 'DATE CREATED': 11,
-        'ANSWER PRECODE': 5.71, 'QUESTION TEXT': 57.14, 'Feedback': 28.57,
-        'Recommendation': 28.57, 'ANSWER OPTION TEXT': 20, 'COUNTRY LANGUAGE': 17.86,
-        'QUESTION ID': 8.57
+        'Name': 20, 'Buyer_Account__c': 20, 'CSM_Name__c': 20, 'Project_Manager__c': 20, 'Project_Manager_Email__c': 20,
+        'Date_Flagged__c': 15, 'Question_Visibility__c': 10, 'Custom_Create_Date__c': 15, 'Lucid_Action__c': 20, 'OwnerId': 20,
+        'Survey_Number__c': 12, 'Question_Type__c': 15, 'Country_Language__c': 17.86, 'QuestionID__c': 8.57,
+        'Required_Action__c': 28.57, 'Setup_Issue__c': 28.57, 'Recommendation__c': 40, 'QuestionName__c': 20,
+        'Custom_Flagged__c': 61.33, '[D]ANSPRECODE': 5.71, '[D]OPTION TEXT': 20
     }
-    # build reverse map to find original key for a renamed header
-    reverse_rename = {v: k for k, v in rename_map.items()}
     for cell in ws[1]:
         header = cell.value
         col_letter = get_column_letter(cell.column)
-        # look up original header name if header was renamed
-        orig_header = reverse_rename.get(header, header)
-        if orig_header in orig_col_widths:
-            ws.column_dimensions[col_letter].width = orig_col_widths[orig_header]
+        if header in orig_col_widths:
+            ws.column_dimensions[col_letter].width = orig_col_widths[header]
         else:
             ws.column_dimensions[col_letter].width = 20
 
+    debug_print("Column widths set")
     # Format DATE CREATED (handle renamed header)
     # If the original 'DATE CREATED' was renamed to 'Custom_Create_Date__c', use df to find column index
     if 'Custom_Create_Date__c' in df.columns:
@@ -200,6 +169,7 @@ def advanced_process_excel_memory(input_data, sf_owner_id=None):
             for cell in row:
                 cell.number_format = 'yyyy-mm-dd'
     
+    debug_print("Dates formatted")
     # Right align DATE FLAGGED & DATE CREATED (use renamed names)
     for col_name in ['Date_Flagged__c', 'Custom_Create_Date__c']:
         if col_name in df.columns:
@@ -208,6 +178,7 @@ def advanced_process_excel_memory(input_data, sf_owner_id=None):
                 for cell in row:
                     cell.alignment = Alignment(horizontal='right')
 
+    debug_print("Alignment applied for Date_Flagged__c and Custom_Create_Date__c")
     # Conditional formatting for renamed columns: Survey_Number__c, QuestionID__c, Custom_Create_Date__c
     for col_name in ['Survey_Number__c', 'QuestionID__c', 'Custom_Create_Date__c']:
         if col_name in df.columns:
@@ -222,6 +193,7 @@ def advanced_process_excel_memory(input_data, sf_owner_id=None):
                 )
             )
     
+    debug_print("Conditional formatting added for Survey_Number__c, QuestionID__c, Custom_Create_Date__c")
     # Ensure proper data format for sorting - convert all cells to proper data types
     for row in ws.iter_rows(min_row=2, max_row=ws.max_row):
         for cell in row:
@@ -233,6 +205,7 @@ def advanced_process_excel_memory(input_data, sf_owner_id=None):
                 elif isinstance(cell.value, (int, float)):
                     cell.data_type = 'n'  # numeric type
     
+    debug_print("Ensured proper data format for sorting - convert all cells to proper data types")
     # Update formula logic to use renamed columns
     feedback_col_idx = None
     base_col_idx = None
@@ -250,26 +223,16 @@ def advanced_process_excel_memory(input_data, sf_owner_id=None):
             cell.data_type = 'f'
     else:
         ws.cell(row=1, column=ws.max_column + 1).value = ''
-    # Remove the end row markers section
-    # Add end row markers for renamed columns
-    # end_row = ws.max_row + 1
-    # for col_name in [
-    #     'QuestionID__c',
-    #     'Required_Action__c',
-    #     'Country_Language__c',
-    #     'Recommendation__c',
-    #     'Setup_Issue__c'
-    # ]:
-    #     if col_name in df.columns:
-    #         col_idx = df.columns.get_loc(col_name) + 1
-    #         ws.cell(row=end_row, column=col_idx).value = '~{END}~'
-
+    
+    debug_print("Formula added to last column header to indicate Live Review Progress")
     # Freeze the top row and enable autofilter
     ws.freeze_panes = 'A2'
     # Clear existing autofilter and reapply to ensure clean state
     ws.auto_filter.ref = None
     ws.auto_filter.ref = ws.dimensions
     
+    debug_print("Freezed first row")
+    debug_print("Excel AutoFilter Enabled")
     # Add data validation dropdown for Setup_Issue__c column
     if 'Setup_Issue__c' in df.columns:
         setup_col_idx = df.columns.get_loc('Setup_Issue__c') + 1
@@ -298,6 +261,7 @@ def advanced_process_excel_memory(input_data, sf_owner_id=None):
         
         # Add Required_Action__c dropdown options to the same helper sheet
         req_action_options = [
+            "--None--",
             "Rephrase + Need Additional Options",
             "Custom instead of standard", 
             "Language Translation Required"
@@ -316,8 +280,8 @@ def advanced_process_excel_memory(input_data, sf_owner_id=None):
         dv.error = 'You must select a value from the dropdown list only. Manual typing is not allowed.'
         dv.errorTitle = 'Invalid Entry'
         dv.errorStyle = 'stop'  # This prevents invalid entries
-        dv.prompt = 'Please select from the dropdown list only'
-        dv.promptTitle = 'Setup Issue Options'
+        # dv.prompt = 'Please select from the dropdown list only'
+        # dv.promptTitle = 'Setup Issue Options'
         
         # Apply to all data rows in the Setup_Issue__c column
         ws.add_data_validation(dv)
@@ -335,8 +299,8 @@ def advanced_process_excel_memory(input_data, sf_owner_id=None):
                 showErrorMessage=False,  # Allow custom values
                 showInputMessage=True
             )
-            dv_req.prompt = 'Select from dropdown or type your own value'
-            dv_req.promptTitle = 'Required Action Options'
+            # dv_req.prompt = 'Select from dropdown or type your own value'
+            # dv_req.promptTitle = 'Required Action Options'
             
             # Apply to all data rows in the Required_Action__c column
             ws.add_data_validation(dv_req)
@@ -345,322 +309,11 @@ def advanced_process_excel_memory(input_data, sf_owner_id=None):
         # Hide the helper sheet
         helper_sheet.sheet_state = 'hidden'
     
+    debug_print("Dropdowns added to Required_Action__c column (typing allowed)")
+    debug_print("Dropdowns added to Setup_Issue__c column (strict selection only)")
     # Save to memory buffer and return bytes
     final_buffer = io.BytesIO()
     wb.save(final_buffer)
     final_buffer.seek(0)
+    debug_print("Final buffer saved")
     return final_buffer.getvalue()
-
-# Keep the original function for backwards compatibility
-def advanced_process_excel(input_path, output_path):
-    
-    # Read and drop first 4 rows
-    df = pd.read_excel(input_path, skiprows=4)
-    
-    # Drop empty columns
-    df = df.dropna(axis=1, how='all')
-    
-    # Build final column order (required, added, kept)
-    preferred_order = [
-        'SURVEY ID', 'ACCOUNT NAME', 'CSM OWNER NAME', 'PM WHO CREATED QUAL', 'EMAIL',
-        'DATE FLAGGED', 'QUESTION TYPE', 'QUESTION VISIBILITY', 'DATE CREATED', 'COUNTRY LANGUAGE',
-        'QUESTION ID', 'Feedback', 'QUESTION NAME', 'QUESTION TEXT', 'Recommendation',
-        'ANSWER PRECODE', 'ANSWER OPTION TEXT',
-        'SF ACCOUNT ID', 'CSM OWNER ID', 'SURVEY ISSUE NAME',
-        'Lucid_Action__c', 'OwnerId'  # <-- new columns
-    ]
-    
-    # Remove unwanted columns and ensure all preferred columns exist
-    df.columns = df.columns.str.strip()
-    cols_to_remove = [
-        'ACCOUNT ID', 'BUSINESS UNIT ID', 'BUSINESS UNIT NAME',
-        'SF ACCOUNT ID', 'REGION', 'CSM OWNER ID', 'CSM EMAIL', 'DATE/TIME CREATED'
-        # 'SURVEY ISSUE NAME' is NOT in remove list
-    ]
-    # Remove unwanted columns except those to keep
-    cols_to_remove = [col for col in cols_to_remove if col not in ['SF ACCOUNT ID', 'CSM OWNER ID', 'SURVEY ISSUE NAME']]
-    df = df.drop(columns=[col for col in cols_to_remove if col in df.columns], errors='ignore')
-    for col in preferred_order:
-        if col not in df.columns:
-            df[col] = ''
-    
-    # Fill DATE FLAGGED with current system date for all rows
-    now_str = datetime.datetime.now().strftime('%Y-%m-%dT%H:%M:%S')
-    if 'DATE FLAGGED' in df.columns:
-        df['DATE FLAGGED'] = now_str
-    
-    # Reindex to final order
-    final_cols = [col for col in preferred_order if col in df.columns]
-    df = df[final_cols]
-    
-    # Sort once by all keys present
-    sort_keys = [col for col in ['QUESTION ID', 'SURVEY ID', 'ANSWER PRECODE'] if col in df.columns]
-    if sort_keys:
-        df = df.sort_values(by=sort_keys, kind='stable')
-    
-    # Detect language for each cell in 'QUESTION TEXT' column and add a new column 'QUESTION TEXT LANGUAGE'
-    if 'QUESTION TEXT' in df.columns:
-        def detect_lang_safe(text):
-            try:
-                return detect(str(text)) if pd.notnull(text) and str(text).strip() else ''
-            except LangDetectException:
-                return ''
-        df['QUESTION TEXT LANGUAGE'] = df['QUESTION TEXT'].apply(detect_lang_safe)
-    
-    # Set Feedback/Recommendation based on language logic
-    if all(col in df.columns for col in ['COUNTRY LANGUAGE', 'QUESTION TEXT LANGUAGE', 'Feedback', 'Recommendation']):
-        mask_non_english = ~df['COUNTRY LANGUAGE'].astype(str).str.startswith('English')
-        mask_qtext_english = df['QUESTION TEXT LANGUAGE'] == 'en'
-        # Where COUNTRY LANGUAGE doesn't start with English and QUESTION TEXT is English
-        mask_translate = mask_non_english & mask_qtext_english
-        df.loc[mask_translate, 'Feedback'] = 'Language Translation Required'
-        df.loc[mask_translate, 'Recommendation'] = 'Translate into correct Language'
-        # Where COUNTRY LANGUAGE doesn't start with English and QUESTION TEXT is not English
-        mask_ok = mask_non_english & ~mask_qtext_english
-        df.loc[mask_ok, 'Feedback'] = 'OK'
-        df.loc[mask_ok, 'Recommendation'] = 'OK'
-    
-    # Column rename mapping
-    rename_map = {
-        'SURVEY ISSUE NAME': 'Name',
-        'SURVEY ID': 'Survey_Number__c',
-        'PM WHO CREATED QUAL': 'Project_Manager__c',
-        'EMAIL': 'Project_Manager_Email__c',
-        'DATE FLAGGED': 'Date_Flagged__c',
-        'QUESTION TYPE': 'Question_Type__c',
-        'QUESTION VISIBILITY': 'Question_Visibility__c',
-        'DATE CREATED': 'Custom_Create_Date__c',
-        'COUNTRY LANGUAGE': 'Country_Language__c',
-        'QUESTION ID': 'QuestionID__c',
-        'Feedback': 'Required_Action__c',
-        'QUESTION NAME': 'QuestionName__c',
-        'QUESTION TEXT': 'Custom_Flagged__c',
-        'Recommendation': 'Recommendation__c',
-        'SF ACCOUNT ID': 'Buyer_Account__c',
-        'CSM OWNER ID': 'CSM_Name__c',  # updated: rename CSM OWNER ID -> CSM_Name__c
-        'Lucid_Action__c': 'Setup_Issue__c',
-        'ANSWER PRECODE': '[D]ANSPRECODE',
-        'ANSWER OPTION TEXT': '[D]OPTION TEXT'
-    }
-    # Rename columns
-    df = df.rename(columns=rename_map)
-    df['Lucid_Action__c'] = 'Not Paused'
-    # Pre-fill Setup_Issue__c with "--None--" for all rows
-    df['Setup_Issue__c'] = '--None--'
-    strict_order = [
-        'Name',
-        'Buyer_Account__c',
-        'CSM_Name__c',
-        'Project_Manager__c',
-        'Project_Manager_Email__c',
-        'Date_Flagged__c',
-        'Question_Visibility__c',
-        'Custom_Create_Date__c',
-        'Lucid_Action__c',
-        'OwnerId',
-        'Survey_Number__c',
-        'Question_Type__c',
-        'Country_Language__c',
-        'QuestionID__c',
-        'Required_Action__c',
-        'Recommendation__c',
-        'Setup_Issue__c',
-        'QuestionName__c',
-        'Custom_Flagged__c',
-        '[D]ANSPRECODE',
-        '[D]OPTION TEXT'
-    ]
-    for col in strict_order:
-        if col not in df.columns:
-            df[col] = ''
-    df = df[strict_order]
-    df.to_excel(output_path, index=False, engine='openpyxl')
-    wb = openpyxl.load_workbook(output_path)
-    ws = wb.active
-
-    # Disable word wrap, unmerge, set width
-    for row in ws.iter_rows():
-        for cell in row:
-            cell.alignment = Alignment(wrap_text=False)
-            # Reset any existing fill patterns that might interfere with sorting
-            cell.fill = openpyxl.styles.PatternFill()
-    for merged in list(ws.merged_cells.ranges):
-        ws.unmerge_cells(str(merged))
-
-    # Clear any existing conditional formatting that might interfere
-    while ws.conditional_formatting:
-        ws.conditional_formatting._cf_rules.clear()
-
-    # Set custom column widths (supports renamed headers)
-    orig_col_widths = {
-        'SURVEY ID': 9.57, 'ACCOUNT NAME': 9.57, 'CSM OWNER NAME': 9.57,
-        'PM WHO CREATED QUAL': 9.57, 'EMAIL': 9.57, 'DATE FLAGGED': 9.57,
-        'QUESTION TYPE': 9.57, 'QUESTION VISIBILITY': 4, 'DATE CREATED': 11,
-        'ANSWER PRECODE': 5.71, 'QUESTION TEXT': 57.14, 'Feedback': 28.57,
-        'Recommendation': 28.57, 'ANSWER OPTION TEXT': 20, 'COUNTRY LANGUAGE': 17.86,
-        'QUESTION ID': 8.57
-    }
-    reverse_rename = {v: k for k, v in rename_map.items()}
-    for cell in ws[1]:
-        header = cell.value
-        col_letter = get_column_letter(cell.column)
-        orig_header = reverse_rename.get(header, header)
-        if orig_header in orig_col_widths:
-            ws.column_dimensions[col_letter].width = orig_col_widths[orig_header]
-        else:
-            ws.column_dimensions[col_letter].width = 20
-
-    # Format DATE CREATED (handle renamed header)
-    if 'Custom_Create_Date__c' in df.columns:
-        date_col_idx = df.columns.get_loc('Custom_Create_Date__c') + 1
-        for row in ws.iter_rows(min_row=2, min_col=date_col_idx, max_col=date_col_idx, max_row=ws.max_row):
-            for cell in row:
-                cell.number_format = 'yyyy-mm-dd'
-    
-    # Right align DATE FLAGGED & DATE CREATED (use renamed names)
-    for col_name in ['Date_Flagged__c', 'Custom_Create_Date__c']:
-        if col_name in df.columns:
-            col_idx = df.columns.get_loc(col_name) + 1
-            for row in ws.iter_rows(min_row=2, min_col=col_idx, max_col=col_idx, max_row=ws.max_row):
-                for cell in row:
-                    cell.alignment = Alignment(horizontal='right')
-
-    # Conditional formatting for renamed columns: Survey_Number__c, QuestionID__c, Custom_Create_Date__c
-    for col_name in ['Survey_Number__c', 'QuestionID__c', 'Custom_Create_Date__c']:
-        if col_name in df.columns:
-            col_idx = df.columns.get_loc(col_name) + 1
-            col_letter = get_column_letter(col_idx)
-            ws.conditional_formatting.add(
-                f'{col_letter}2:{col_letter}{ws.max_row}',
-                ColorScaleRule(
-                    start_type='min', start_color='FF00FF00',
-                    mid_type='percentile', mid_value=50, mid_color='CC277BF5',
-                    end_type='max', end_color='FFFFFF00'
-                )
-            )
-    
-    # Ensure proper data format for sorting - convert all cells to proper data types
-    for row in ws.iter_rows(min_row=2, max_row=ws.max_row):
-        for cell in row:
-            if cell.value is not None:
-                # Ensure text values are properly formatted as text
-                if isinstance(cell.value, str):
-                    cell.data_type = 's'  # string type
-                # Ensure numeric values are properly formatted
-                elif isinstance(cell.value, (int, float)):
-                    cell.data_type = 'n'  # numeric type
-    
-    # Update formula logic to use renamed columns
-    feedback_col_idx = None
-    base_col_idx = None
-    if 'Required_Action__c' in df.columns:
-        feedback_col_idx = df.columns.get_loc('Required_Action__c') + 1
-    if 'QuestionID__c' in df.columns:
-        base_col_idx = df.columns.get_loc('QuestionID__c') + 1
-    if feedback_col_idx and base_col_idx:
-        feedback_col_letter = get_column_letter(feedback_col_idx)
-        base_col_letter = get_column_letter(base_col_idx)
-        formula = f'ROUND((COUNTA({feedback_col_letter}:{feedback_col_letter})/COUNTA({base_col_letter}:{base_col_letter}))*100,2)&"%"'
-        cell = ws.cell(row=1, column=ws.max_column + 1)
-        cell.value = f'={formula}'
-        if hasattr(cell, 'data_type'):
-            cell.data_type = 'f'
-    else:
-        ws.cell(row=1, column=ws.max_column + 1).value = ''
-    # Remove the end row markers section
-    # end_row = ws.max_row + 1
-    # for col_name in [
-    #     'QuestionID__c',
-    #     'Required_Action__c',
-    #     'Country_Language__c',
-    #     'Recommendation__c',
-    #     'Setup_Issue__c'
-    # ]:
-    #     if col_name in df.columns:
-    #         col_idx = df.columns.get_loc(col_name) + 1
-    #         ws.cell(row=end_row, column=col_idx).value = '~{END}~'
-
-    # Freeze the top row (header row)
-    ws.freeze_panes = 'A2'
-
-    # Enable autofilter for all columns (last step)
-    # Clear existing autofilter and reapply to ensure clean state
-    ws.auto_filter.ref = None
-    ws.auto_filter.ref = ws.dimensions
-    
-    # Add data validation dropdown for Setup_Issue__c column
-    if 'Setup_Issue__c' in df.columns:
-        setup_col_idx = df.columns.get_loc('Setup_Issue__c') + 1
-        setup_col_letter = get_column_letter(setup_col_idx)
-        
-        # Define dropdown options with --None-- as first option
-        dropdown_options = [
-            "--None--",
-            "Custom Instead of Standard",
-            "Narrow Custom without Targeting", 
-            "Leading (Yes/No)",
-            "Leading (Too Few Options)",
-            "Indicates PII",
-            "Multi-Phase + Other Issues",
-            "Grammatical Error / Inconsistent Phrasing",
-            "Untranslated Text",
-            "Illogical Order",
-            "Multiple Errors",
-            "Other Set up Issue"
-        ]
-        
-        # Create a helper sheet with the dropdown values
-        helper_sheet = wb.create_sheet("ValidationData")
-        for i, option in enumerate(dropdown_options, 1):
-            helper_sheet.cell(row=i, column=1, value=option)
-        
-        # Add Required_Action__c dropdown options to the same helper sheet
-        req_action_options = [
-            "Rephrase + Need Additional Options",
-            "Custom instead of standard", 
-            "Language Translation Required"
-        ]
-        for i, option in enumerate(req_action_options, 1):
-            helper_sheet.cell(row=i, column=2, value=option)
-        
-        # Create data validation for Setup_Issue__c (strict)
-        dv = DataValidation(
-            type="list",
-            formula1=f"ValidationData!$A$1:$A${len(dropdown_options)}",
-            allow_blank=False,
-            showErrorMessage=True,
-            showInputMessage=True
-        )
-        dv.error = 'You must select a value from the dropdown list only. Manual typing is not allowed.'
-        dv.errorTitle = 'Invalid Entry'
-        dv.errorStyle = 'stop'  # This prevents invalid entries
-        dv.prompt = 'Please select from the dropdown list only'
-        dv.promptTitle = 'Setup Issue Options'
-        
-        # Apply to all data rows in the Setup_Issue__c column
-        ws.add_data_validation(dv)
-        dv.add(f'{setup_col_letter}2:{setup_col_letter}{ws.max_row}')
-        
-        # Create data validation for Required_Action__c (allows custom values)
-        if 'Required_Action__c' in df.columns:
-            req_action_col_idx = df.columns.get_loc('Required_Action__c') + 1
-            req_action_col_letter = get_column_letter(req_action_col_idx)
-            
-            dv_req = DataValidation(
-                type="list",
-                formula1=f"ValidationData!$B$1:$B${len(req_action_options)}",
-                allow_blank=True,
-                showErrorMessage=False,  # Allow custom values
-                showInputMessage=True
-            )
-            dv_req.prompt = 'Select from dropdown or type your own value'
-            dv_req.promptTitle = 'Required Action Options'
-            
-            # Apply to all data rows in the Required_Action__c column
-            ws.add_data_validation(dv_req)
-            dv_req.add(f'{req_action_col_letter}2:{req_action_col_letter}{ws.max_row}')
-        
-        # Hide the helper sheet
-        helper_sheet.sheet_state = 'hidden'
-    
-    wb.save(output_path)
