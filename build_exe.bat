@@ -2,8 +2,18 @@
 echo Building CustQuals Processor executable...
 echo.
 
+REM Build CustQuals Processor executable using virtual environment
+
+REM Create virtual environment if it doesn't exist
+if not exist "venv" (
+    python -m venv venv
+)
+
+REM Activate virtual environment
+call venv\Scripts\activate
+
 REM Install required packages
-pip install pyinstaller flask pandas openpyxl langdetect werkzeug
+pip install -r requirements.txt
 
 REM Clean previous builds
 if exist "build" rmdir /s /q "build"
@@ -11,7 +21,7 @@ if exist "dist" rmdir /s /q "dist"
 if exist "__pycache__" rmdir /s /q "__pycache__"
 
 REM Build the executable
-pyinstaller --clean CustQualPro.spec --add-data "static/css/main.css;static/css" --add-data "static/js/app.js;static/js" --add-data "static/favicon.ico;static" --add-data "templates;templates" --hidden-import "openpyxl" --hidden-import "flask" --hidden-import "werkzeug" run.py
+pyinstaller CustQualPro.spec
 
 REM Check if build was successful
 if exist "dist\CustQualPro.exe" (
@@ -29,3 +39,6 @@ if exist "dist\CustQualPro.exe" (
     echo Build failed! Please check for errors above.
     pause
 )
+
+REM Deactivate virtual environment
+call venv\Scripts\deactivate
