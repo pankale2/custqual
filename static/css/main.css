@@ -55,6 +55,9 @@ body.dark-mode #survey-loi-container h3 {
     padding-right: 32px;
     flex: 1 1 0;
 }
+body.dark-mode .left-section {
+    border-right-color: #444;
+}
 .right-section {
     display: flex;
     flex-direction: column;
@@ -77,6 +80,10 @@ body.dark-mode #survey-loi-container h3 {
 @media (max-width: 900px) {
     .right-section {
         padding-left: 0;
+    }
+    .left-section {
+        border-right: none;
+        padding-right: 0;
     }
 }
 
@@ -244,6 +251,7 @@ button, input[type="submit"], button[type="button"] {
   overflow: hidden;
   box-sizing: border-box;
   margin: 0;
+  position: relative;
 }
 .upload.dragover { 
   border-color: #cd25f1; 
@@ -265,8 +273,8 @@ button, input[type="submit"], button[type="button"] {
 }
 .file-input {
   position: absolute;
-  inset: 0;
-  display: block;
+  top: 0;
+  left: 0;
   width: 100%;
   height: 100%;
   opacity: 0;
@@ -548,4 +556,51 @@ body.dark-mode #process-btn:hover:enabled {
 }
 body.dark-mode .ssrs:hover {
     color: #6502f5 !important;
+}
+
+/* Bottom info row layout */
+.bottom-info-row {
+    display: flex;
+    flex-direction: row;
+    gap: 32px;
+    margin-top: 32px;
+    margin-bottom: 20px;
+}
+
+.bottom-info-left,
+.bottom-info-right {
+    flex: 1;
+    min-width: 0;
+}
+
+.bottom-info-left {
+    border-right: 1px solid #e0e0e0;
+    padding-right: 32px;
+}
+
+.bottom-info-right {
+    padding-left: 10px;
+}
+
+body.dark-mode .bottom-info-left {
+    border-right-color: #444;
+}
+
+@media (max-width: 900px) {
+    .right-section {
+        padding-left: 0;
+    }
+    .left-section {
+        border-right: none;
+        padding-right: 0;
+    }
+    .bottom-info-row {
+        flex-direction: column;
+        gap: 20px;
+    }
+    .bottom-info-left,
+    .bottom-info-right {
+        padding: 0;
+        border: none;
+    }
 }

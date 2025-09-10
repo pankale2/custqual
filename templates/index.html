@@ -39,8 +39,33 @@
               <a class="ssrs" href="http://reports.lucidhq.com/Reports/report/Platform%20Ops/Custom%20Quals%20New%20Past%2024%20Hours" target="_blank" rel="noopener">SSRS Custom Quals</a></br>
               <a class="ssrs" href="https://cintgroup.lightning.force.com/lightning/n/Data_Uploader" target="_blank" rel="noopener">SF Data Uploader</a>
             </div>
-            <section class="info-card" aria-labelledby="infoTitle">
-                <details class="info-more">
+          </div>
+          <div class="right-section">
+            <button type="button" id="dark-mode-toggle" class="action-btn">🌙 Dark Mode</button>
+            <label class="upload" id="uploadArea" aria-describedby="uploadHelp" role="button" tabindex="0">
+              <div class="h3">Click to browse - OR - Drop file here </div>
+              <div class="small" id="uploadHelp">(Only supports file exported from SSRS)</div>
+              <input id="fileInput" class="file-input" name="file" type="file" accept=".xlsx" />
+            </label>
+            <div class="preview" id="preview" aria-hidden="true">
+              <div class="file-icon">📄</div>
+              <div class="meta">
+                <div class="name" id="fileName"></div>
+                <div class="size" id="fileSize"></div>
+              </div>
+              <button id="removeFile" class="remove" title="Remove selected file">Remove</button>
+            </div>
+            <div class="actions">
+              <input type="submit" id="process-btn" value="Process & Download" style="font-size: 1.3rem; padding: 18px 60px; font-weight: bold; letter-spacing: 1px; width: 100%;">
+            </div>
+          </div>
+        </div>
+        
+        <!-- Bottom info sections -->
+        <div class="bottom-info-row">
+          <div class="bottom-info-left">
+            <section class="info-card">
+              <details class="info-more">
                 <summary><b><u>What happens to your file</u> after uploaded on this page!</b></summary>
                 <ul>
                   <li>Format the sheet to help further manual review of questions.
@@ -65,6 +90,10 @@
                   <li>Return the processed file (existing file name maintained, just added <code>timestamp</code> to the end).</li>
                 </ul>
               </details>
+            </section>
+          </div>
+          <div class="bottom-info-right">
+            <section class="info-card">
               <details class="info-more">
                 <summary><b>Next <u>steps to be performed MANUALLY</u> on the file received from here...</b></summary>
                 <ol>
@@ -80,26 +109,8 @@
               </details>
             </section>
           </div>
-          <div class="right-section">
-            <button type="button" id="dark-mode-toggle" class="action-btn">🌙 Dark Mode</button>
-            <label class="upload" id="uploadArea" aria-describedby="uploadHelp" role="button" tabindex="0">
-              <div class="h3">Click to browse - OR - Drop file here </div>
-              <div class="small" id="uploadHelp">(Only supports file exported from SSRS)</div>
-              <input id="fileInput" class="file-input" name="file" type="file" accept=".xlsx" />
-            </label>
-            <div class="preview" id="preview" aria-hidden="true">
-              <div class="file-icon">📄</div>
-              <div class="meta">
-                <div class="name" id="fileName"></div>
-                <div class="size" id="fileSize"></div>
-              </div>
-              <button id="removeFile" class="remove" title="Remove selected file">Remove</button>
-            </div>
-            <div class="actions">
-              <input type="submit" id="process-btn" value="Process & Download" style="font-size: 1.3rem; padding: 18px 60px; font-weight: bold; letter-spacing: 1px; width: 100%;">
-            </div>
-          </div>
         </div>
+
         <!-- Bottom button row -->
         <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px; gap: 15px;">
           <!-- Left side buttons -->
