@@ -11,7 +11,7 @@ if exist "dist" rmdir /s /q "dist"
 if exist "__pycache__" rmdir /s /q "__pycache__"
 
 REM Build the executable
-pyinstaller --clean CustQualPro.spec
+pyinstaller --clean CustQualPro.spec --add-data "static/css/main.css;static/css" --add-data "static/js/app.js;static/js" --add-data "static/favicon.ico;static" --add-data "templates;templates" --hidden-import "openpyxl" --hidden-import "flask" --hidden-import "werkzeug" run.py
 
 REM Check if build was successful
 if exist "dist\CustQualPro.exe" (

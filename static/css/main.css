@@ -76,6 +76,7 @@ body.dark-mode .left-section {
 .right-section .preview,
 .right-section .actions {
     width: 100%;
+    box-sizing: border-box;
 }
 @media (max-width: 900px) {
     .right-section {
@@ -291,6 +292,7 @@ button, input[type="submit"], button[type="button"] {
   border-radius: 10px;
   margin-top: 12px;
   width: 100%;
+  box-sizing: border-box;
 }
 .preview.show { 
   display: flex; 
