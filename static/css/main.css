@@ -1,0 +1,551 @@
+body { 
+    /* Light mode default */
+    font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
+    margin: 0; 
+    padding: 20px; 
+    background-color: #f4f7fa; 
+    color: #22223b;
+    line-height: 1.6;
+}
+body.dark-mode {
+    background-color: #181a20;
+    color: #e0e0e0;
+}
+.container { 
+    max-width: 1600px;
+    margin: 5px auto;
+    background-color: #fff; 
+    padding: 15px 15px; 
+    border-radius: 14px; 
+    box-shadow: 0 6px 24px rgba(34, 34, 59, 0.08); 
+}
+body.dark-mode .container {
+    background-color: #23263a;
+    box-shadow: 0 6px 24px rgba(34, 34, 59, 0.18);
+}
+h1 {
+    color: #22223b;
+    text-align: left;
+    margin-bottom: 28px;
+    margin-top: 5px;
+    font-size: 2.2rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+}
+body.dark-mode h1 {
+    color: #e0e0e0;
+}
+
+/* Add dark mode styling for survey LOI container heading */
+body.dark-mode #survey-loi-container h3 {
+    color: #e0e0e0;
+}
+
+.main-flex-row {
+    display: flex;
+    flex-direction: row;
+    gap: 32px;
+}
+.left-section, .right-section {
+    min-width: 320px;
+    transition: flex 0.3s, max-width 0.3s;
+}
+.left-section {
+    border-right: 1px solid #e0e0e0;
+    padding-right: 32px;
+    flex: 1 1 0;
+}
+.right-section {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    padding-left: 10px;
+    flex: 1 1 0;
+    align-items: stretch;
+}
+.right-section > #dark-mode-toggle {
+    width: auto;
+    align-self: flex-end;
+    position: relative;
+    z-index: 100;
+}
+.right-section .upload,
+.right-section .preview,
+.right-section .actions {
+    width: 100%;
+}
+@media (max-width: 900px) {
+    .right-section {
+        padding-left: 0;
+    }
+}
+
+label { 
+    margin-bottom: 0;
+    font-weight: 600;
+    color: #22223b;
+    font-size: 1rem;
+    letter-spacing: 0.1px;
+    min-width: 200px;
+    flex-shrink: 0;
+}
+body.dark-mode label, body.dark-mode .form-group label {
+    color: #e0e0e0;
+}
+input[type="file"], 
+input[type="number"] { 
+    flex: 1;
+    min-width: 50px;
+    padding: 10px 12px; 
+    border: 1px solid #bfc9d1;
+    border-radius: 6px;
+    box-sizing: border-box;
+    margin-bottom: 0;
+    font-size: 1rem;
+    background: #f8fafc;
+    color: #22223b;
+    transition: border-color 0.2s;
+}
+body.dark-mode input[type="file"], 
+body.dark-mode input[type="number"] {
+    background: #23263a;
+    color: #e0e0e0;
+    border-color: #444;
+}
+input[type="file"]:focus, 
+input[type="number"]:focus {
+    border-color: #00b6f0;
+    outline: none;
+}
+input[type="file"] {
+    cursor: pointer;
+}
+input[type="submit"], button[type="button"] { 
+    background-color: #2a0b57;
+    color: #fff; 
+    padding: 13px 22px; 
+    border: none; 
+    border-radius: 6px; 
+    cursor: pointer; 
+    font-size: 1.1rem;
+    font-weight: 600;
+    transition: background 0.2s, color 0.2s;
+    margin-top: 10px;
+    box-shadow: 0 2px 8px rgba(42,11,87,0.08);
+}
+body.dark-mode input[type="submit"], body.dark-mode button[type="button"] {
+    background-color: #6502f5;
+    color: #fff;
+}
+input[type="submit"]:hover:enabled, button[type="button"]:hover:enabled { 
+    background-color: #cd25f1;
+    color: #fff;
+}
+body.dark-mode input[type="submit"]:hover:enabled, body.dark-mode button[type="button"]:hover:enabled {
+    background-color: #6502f5;
+    color: #fff;
+}
+/* Spinner overlay styles */
+#processing-overlay {
+    display: none;
+    position: fixed;
+    z-index: 9999;
+    left: 0; top: 0; right: 0; bottom: 0;
+    background: rgba(255,255,255,0.7);
+    align-items: center;
+    justify-content: center;
+}
+#processing-overlay .spinner {
+    border: 6px solid #f3f3f3;
+    border-top: 6px solid #cd25f1;
+    border-radius: 50%;
+    width: 60px;
+    height: 60px;
+    animation: spin 1s linear infinite;
+    margin-bottom: 18px;
+}
+#processing-overlay .processing-text {
+    font-size: 1.2rem;
+    color: #2a0b57;
+    font-weight: 600;
+    text-wrap: wrap;
+    text-align: center;
+}
+body.dark-mode #processing-overlay .processing-text {
+    color: #6502f5;
+}
+@keyframes spin {
+    0% { transform: rotate(0deg);}
+    100% { transform: rotate(360deg);}
+}
+#advanced-options {
+    margin-top: 8px;
+}
+a, .ssrs, input[type="submit"], button, .action-btn, .primary {
+    color: #cd25f1;
+    transition: color 0.2s, background 0.2s, border 0.2s;
+}
+a:hover, .ssrs:hover, input[type="submit"]:hover:enabled, button:hover, .action-btn:hover, .primary:hover {
+    color: #2a0b57;
+}
+body.dark-mode a:hover, body.dark-mode .ssrs:hover, body.dark-mode input[type="submit"]:hover:enabled, body.dark-mode button:hover, body.dark-mode .action-btn:hover, body.dark-mode .primary:hover {
+    color: #6502f5;
+}
+
+/* Action button (dark mode toggle, process, etc.) */
+.action-btn {
+    background: #f4f7fa;
+    color: #2a0b57;
+    border: 1px solid #cd25f1;
+    border-radius: 18px;
+    padding: 6px 18px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: color 0.2s, background 0.2s, border 0.2s;
+    text-decoration: none;
+    margin: 0;
+}
+.action-btn:hover {
+    color: #2a0b57;
+    background: #f0e6fa;
+    border-color: #2a0b57;
+}
+body.dark-mode .action-btn {
+    background: #23263a;
+    color: #e0e0e0;
+    border: 1px solid #cd25f1;
+}
+body.dark-mode .action-btn:hover {
+    color: #6502f5;
+    background: #181a20;
+    border-color: #6502f5;
+}
+
+/* Remove underline for all buttons */
+button, input[type="submit"], button[type="button"] {
+    text-decoration: none;
+    background: none;
+    border: none;
+    color: inherit;
+}
+
+/* File upload styles */
+.upload {
+  border: 2px dashed #e6eefc;
+  border-radius: 12px;
+  padding: 26px;
+  text-align: center;
+  background: #f4f7fa;
+  transition: all 0.18s ease;
+  cursor: pointer;
+  display: block;
+  width: 100%;
+  overflow: hidden;
+  box-sizing: border-box;
+  margin: 0;
+}
+.upload.dragover { 
+  border-color: #cd25f1; 
+  background: #f0f6ff; 
+  transform: translateY(-3px);
+}
+.upload:focus-visible { 
+  outline: 3px solid #cd25f1; 
+  outline-offset: 2px; 
+}
+.h3 { 
+  font-size: 1.05rem; 
+  color: #22223b; 
+  margin-bottom: 6px; 
+}
+.small { 
+  color: #718096; 
+  margin-bottom: 8px; 
+}
+.file-input {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+  border-radius: inherit;
+}
+.preview {
+  display: none;
+  align-items: center;
+  gap: 12px;
+  background: #fff;
+  border: 1px solid #eef2ff;
+  padding: 10px;
+  border-radius: 10px;
+  margin-top: 12px;
+  width: 100%;
+}
+.preview.show { 
+  display: flex; 
+}
+.file-icon { 
+  font-size: 1.6rem; 
+  margin-right: 10px; 
+}
+.meta { 
+  flex: 1; 
+  min-width: 0; 
+}
+.name { 
+  font-weight: 600; 
+  color: #22223b; 
+  overflow: hidden; 
+  text-overflow: ellipsis; 
+  white-space: nowrap; 
+}
+.size { 
+  font-size: 0.85rem; 
+  color: #718096; 
+}
+.remove { 
+  background: #efefef; 
+  color: #22223b; 
+  border-radius: 8px; 
+  padding: 6px 10px; 
+  border: none; 
+  cursor: pointer; 
+}
+.actions { 
+  display: flex; 
+  gap: 10px; 
+  margin-top: 12px; 
+  width: 100%;
+}
+
+.card {
+  width: 100%;
+  max-width: 720px;
+  margin: 0 auto;
+}
+.lead { 
+  color: #718096; 
+  margin-bottom: 8px; 
+}
+.ssrs { 
+  color: #667eea; 
+  text-decoration: underline; 
+  font-weight: 600; 
+}
+/* Dark mode styles for upload elements */
+body.dark-mode .upload {
+  background: #23263a;
+  border-color: #444;
+}
+body.dark-mode .upload.dragover {
+  border-color: #cd25f1;
+  background: #2a2e4a;
+}
+body.dark-mode .h3 {
+  color: #e0e0e0;
+}
+body.dark-mode .small {
+  color: #a0a0a0;
+}
+body.dark-mode .preview {
+  background: #23263a;
+  border-color: #444;
+}
+body.dark-mode .name {
+  color: #e0e0e0;
+}
+body.dark-mode .size {
+  color: #a0a0a0;
+}
+body.dark-mode .remove {
+  background: #444;
+  color: #e0e0e0;
+}
+
+body.dark-mode .lead {
+  color: #a0a0a0;
+}
+body.dark-mode .ssrs {
+  color: #cd25f1;
+}
+
+/* Custom tweaks for layout moved from index.html */
+.left-section .actions { width: 100%; }
+.left-section .card { margin-top: 24px; }
+.left-section .upload { box-sizing: border-box; width: 100%; padding-left: 0; padding-right: 0; }
+.info-card {
+  background: #f8fafc;
+  border: 1px solid #e6eefc;
+  border-radius: 12px;
+  padding: 0;
+  margin-top: 0;
+  transition: box-shadow 0.2s ease;
+}
+body.dark-mode .info-card {
+  background: #23263a;
+  border-color: #444;
+}
+.info-card:hover {
+  box-shadow: 0 4px 16px rgba(34, 34, 59, 0.08);
+}
+body.dark-mode .info-card:hover {
+  box-shadow: 0 4px 16px rgba(34, 34, 59, 0.18);
+}
+#infoTitle {
+  font-weight: 700;
+  color: #22223b;
+  font-size: 1.2rem;
+  margin-bottom: 16px;
+  letter-spacing: 0.2px;
+}
+body.dark-mode #infoTitle {
+  color: #e0e0e0;
+}
+.info-more {
+  overflow: hidden;
+  border: 1px solid #e6eefc;
+  border-radius: 8px;
+  margin-bottom: 12px;
+  transition: border-color 0.2s ease;
+}
+body.dark-mode .info-more {
+  border-color: #444;
+}
+.info-more[open] {
+  border-color: #cd25f1;
+}
+.info-more summary {
+  font-weight: 600;
+  cursor: pointer;
+  outline: none;
+  padding: 16px 20px;
+  background: #f4f7fa;
+  border-radius: 8px;
+  transition: background 0.2s ease, color 0.2s ease;
+  font-size: 1rem;
+  color: #22223b;
+  list-style: none;
+  position: relative;
+}
+body.dark-mode .info-more summary {
+  background: #181a20;
+  color: #e0e0e0;
+}
+.info-more summary:hover {
+  background: #e6eefc;
+  color: #2a0b57;
+}
+body.dark-mode .info-more summary:hover {
+  background: #2a2e4a;
+  color: #cd25f1;
+}
+.info-more summary::after {
+  content: '+';
+  position: absolute;
+  right: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-weight: bold;
+  font-size: 1.2rem;
+  color: #cd25f1;
+  transition: transform 0.3s ease;
+}
+.info-more[open] summary::after {
+  content: '−';
+  transform: translateY(-50%) rotate(180deg);
+}
+.info-more > *:not(summary) {
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), 
+              opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+              padding 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  padding: 0 20px;
+}
+.info-more[open] > *:not(summary) {
+  max-height: 2000px;
+  opacity: 1;
+  padding: 0 20px 20px 20px;
+  transition: max-height 0.5s cubic-bezier(0.4, 0, 0.2, 1), 
+              opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+              padding 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.info-more ul, .info-more ol {
+  margin: 0;
+  padding-left: 20px;
+  color: #22223b;
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+body.dark-mode .info-more ul, body.dark-mode .info-more ol {
+  color: #e0e0e0;
+}
+.info-more li {
+  margin-bottom: 8px;
+}
+.info-more li ul, .info-more li ol {
+  margin-top: 8px;
+  margin-bottom: 0;
+}
+.info-more code {
+  background: #f0f6ff;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 0.9rem;
+  color: #2a0b57;
+}
+body.dark-mode .info-more code {
+  background: #2a2e4a;
+  color: #cd25f1;
+}
+
+/* Process button specific styling - override global link styles */
+#process-btn {
+    width: 100% !important;
+    box-sizing: border-box !important;
+    background: #2A0B57 !important;
+    color: #fff !important;
+    border: none !important;
+    border-radius: 10px;
+    font-size: 1.3rem;
+    padding: 18px 60px;
+    font-weight: bold;
+    letter-spacing: 1px;
+    transition: background 0.2s, color 0.2s;
+    text-decoration: none !important;
+}
+#process-btn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+#process-btn:hover:enabled {
+    background: #cd25f1 !important;
+    color: #fff !important;
+}
+body.dark-mode #process-btn {
+    background: #6502f5 !important;
+    color: #fff !important;
+}
+body.dark-mode #process-btn:hover:enabled {
+    background: #cd25f1 !important;
+    color: #fff !important;
+}
+
+/* SSRS and SF Data Uploader links to match SF OwnerId link styling */
+.ssrs, .ssrs:visited, .ssrs:active {
+    color: #cd25f1 !important;
+    font-weight: bold !important;
+    text-decoration: underline !important;
+    transition: color 0.2s;
+}
+.ssrs:hover {
+    color: #2a0b57 !important;
+}
+body.dark-mode .ssrs:hover {
+    color: #6502f5 !important;
+}
