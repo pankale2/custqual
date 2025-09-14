@@ -109,9 +109,9 @@ input[type="number"] {
     border-radius: 6px;
     box-sizing: border-box;
     margin-bottom: 0;
-    font-size: 1rem;
+    font-size: 1.3rem;
     background: #f8fafc;
-    color: #22223b;
+    color: #fff;
     transition: border-color 0.2s;
 }
 body.dark-mode input[type="file"], 
@@ -264,8 +264,8 @@ button, input[type="submit"], button[type="button"] {
   outline-offset: 2px; 
 }
 .h3 { 
-  font-size: 1.05rem; 
-  color: #22223b; 
+  font-size: 1.3rem; 
+  color: #fff; 
   margin-bottom: 6px; 
 }
 .small { 
@@ -586,6 +586,35 @@ body.dark-mode .ssrs:hover {
 
 body.dark-mode .bottom-info-left {
     border-right-color: #444;
+}
+
+#dark-mode-toggle {
+    height: 40px; /* Match height with Exit button */
+    padding: 10px 20px;
+    font-size: 0.9rem;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+#uploadArea {
+  background-color: #2a0b57; /* Light mode not hovered */
+  color: white; /* Match process-btn text color */
+  padding: 18px 60px; /* Match process-btn padding */
+  border-radius: 6px; /* Match process-btn border radius */
+  text-align: center;
+  cursor: pointer;
+}
+
+#uploadArea:hover {
+  background-color: #cd25f1; /* Light mode hovered */
+}
+
+body.dark-mode #uploadArea {
+  background-color: #6502f5; /* Dark mode not hovered */
+}
+
+body.dark-mode #uploadArea:hover {
+  background-color: #cd25f1; /* Dark mode hovered */
 }
 
 @media (max-width: 900px) {

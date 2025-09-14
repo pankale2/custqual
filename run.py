@@ -57,10 +57,20 @@ def upload_file():
     sf_owner_id_display = sf_owner_id if sf_owner_id else "SF ID Unknown"
     return render_template('index.html', username=username, sf_owner_id=sf_owner_id_display)
 
+@app.route('/shutdown', methods=['POST'])
+def shutdown():
+    shutdown_server()
+    return 'Server shutting down...'
+
+
+def shutdown_server():
+    print("Shutting down the server...")
+    os._exit(0)  # Forcefully terminate the process
+
 def open_browser():
     """Open browser after a short delay to ensure server is running"""
     time.sleep(1.5)
-    webbrowser.open('http://localhost:8080')
+    webbrowser.open('http://localhost:5001')
 
 # No changes needed for PyInstaller compatibility.
 # Just ensure your main entry point is:
@@ -70,11 +80,10 @@ if __name__ == '__main__':
     browser_thread = threading.Thread(target=open_browser)
     browser_thread.daemon = True
     browser_thread.start()
-    print("Server running at: http://localhost:8080")
+    print("Server running at: http://localhost:5001")
     print("Press Ctrl+C to stop the server")
     try:
-        app.run(host='0.0.0.0', port=8080, debug=False)
+        app.run(host='0.0.0.0', port=5001, debug=False)
     except KeyboardInterrupt:
         print("\nServer stopped by user (Ctrl+C).")
-        sys.exit(0)
         sys.exit(0)

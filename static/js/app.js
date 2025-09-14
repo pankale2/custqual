@@ -11,6 +11,7 @@ document.addEventListener('DOMContentLoaded', function() {
   const processBtn = document.getElementById('process-btn');
   const darkModeToggle = document.getElementById('dark-mode-toggle');
   const processingOverlay = document.getElementById('processing-overlay');
+  const uploadIcon = document.getElementById('uploadIcon');
 
   let isProcessing = false;
   let dragCounter = 0;
@@ -37,7 +38,11 @@ document.addEventListener('DOMContentLoaded', function() {
   });
 
   fileInput.addEventListener('change', handleFile);
-  removeFileBtn.addEventListener('click', ()=> { setPreview(null); uploadArea.focus(); });
+  removeFileBtn.addEventListener('click', (e) => {
+    e.preventDefault(); // Prevent default behavior
+    fileInput.value = ''; // Clear the file input
+    setPreview(null); // Reset the preview area
+  });
 
   function handleFile(){
     const file = fileInput.files[0];
@@ -125,48 +130,80 @@ document.addEventListener('DOMContentLoaded', function() {
     hideProcessingOverlay();
   }
 
-  // Dark mode toggle logic
+  // Dark mode helpers + upload icon update
+  function updateUploadIcon() {
+    if (!uploadIcon) return console.error('uploadIcon missing; cannot update icon');
+    // Always use uploadw.png for both light and dark modes
+    uploadIcon.src = '/static/uploadw.png';
+  }
+
   function setDarkMode(enabled) {
     document.body.classList.toggle('dark-mode', enabled);
     darkModeToggle.textContent = enabled ? '☀️ Light Mode' : '🌙 Dark Mode';
+    // persist preference here (single source of truth)
+    localStorage.setItem('dark_mode', enabled ? '1' : '0');
+    updateUploadIcon();
   }
-  darkModeToggle.addEventListener('click', function(e) {
-    e.preventDefault();
-    e.stopPropagation();
-    e.stopImmediatePropagation();
-    const isCurrentlyDark = document.body.classList.contains('dark-mode');
-    setDarkMode(!isCurrentlyDark);
-    localStorage.setItem('dark_mode', !isCurrentlyDark ? '1' : '0');
-  });
-  // Restore dark mode preference
+
+  // Restore dark mode preference and initialize icon
   const darkPref = localStorage.getItem('dark_mode');
   setDarkMode(darkPref === '1');
 
-  // Show shutdown button only in EXE mode
-  function checkEXEMode() {
-    const isEXE = window.navigator.userAgent.includes('Electron') || 
-                 window.location.protocol === 'file:' ||
-                 window.location.hostname === '127.0.0.1';
-    if (isEXE) {
-      const shutdownBtn = document.getElementById('shutdown-btn');
-      if (shutdownBtn) shutdownBtn.style.display = 'block';
-    }
-  }
-  checkEXEMode();
+  // Toggle via button (use setDarkMode so icon updates)
+  darkModeToggle.addEventListener('click', function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    const currentlyDark = document.body.classList.contains('dark-mode');
+    setDarkMode(!currentlyDark);
+  });
+
+  // Show shutdown button
+  const shutdownBtn = document.getElementById('shutdown-btn');
+  if (shutdownBtn) shutdownBtn.style.display = 'block';
 
   // Shutdown function
   window.shutdownApp = function() {
-    if (confirm('Are you sure you want to exit the application?')) {
-      fetch('/shutdown', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-      }).then(() => {
-        alert('Application is shutting down. You can close this browser window.');
-        window.close();
-      }).catch(() => {
-        alert('Application is shutting down. You can close this browser window.');
-        window.close();
-      });
-    }
+    fetch('http://localhost:5001/shutdown', { method: 'POST' }) // Updated port to 5001
+        .then(response => {
+            if (response.ok) {
+                console.log('Application is shutting down.');
+                // Small delay to ensure shutdown request is processed
+                setTimeout(() => {
+                    window.close(); // Attempt to close the browser tab
+                    // Fallback: redirect to a blank page if window.close() doesn't work
+                    setTimeout(() => {
+                        window.location.href = 'about:blank';
+                    }, 500);
+                }, 100);
+            } else {
+                console.error('Failed to shut down the application.');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            // Even if there's an error, try to close the tab
+            window.close();
+        });
   };
+
+  // Debugging logic
+  console.log('Debugging app.js');
+
+  // Check if uploadIcon exists
+  if (!uploadIcon) {
+      console.error('uploadIcon element not found');
+  }
+
+  // Check if dark-mode-toggle exists
+  if (!darkModeToggle) {
+      console.error('dark-mode-toggle element not found');
+  }
+
+  // Debugging updateUploadIcon function
+  function debugUpdateUploadIcon() {
+      console.log('Using uploadw.png for all modes');
+      uploadIcon.src = '/static/uploadw.png';
+  }
+
+  debugUpdateUploadIcon();
 });

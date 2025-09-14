@@ -1,6 +1,4 @@
 @echo off
-echo Building CustQuals Processor executable...
-echo.
 
 REM Build CustQuals Processor executable using virtual environment
 
@@ -31,7 +29,7 @@ if exist "dist\CustQualPro.exe" (
     echo To run the application:
     echo 1. Navigate to the dist folder
     echo 2. Run CustQualPro.exe
-    echo 3. Open browser and go to http://localhost:8080
+    echo 3. Open browser and go to http://localhost:5001
     echo.
     pause
 ) else (

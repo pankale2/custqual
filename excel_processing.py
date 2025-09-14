@@ -12,24 +12,26 @@ import io
 
 DEBUG_MODE = True  # Set to False to disable debug prints
 
-def debug_print(message, extra_info=""):
+def debug_print(message):
     if DEBUG_MODE:
         timestamp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        print(f"DEBUG [{timestamp}] {message}{extra_info}")
+        print(f"DEBUG [{timestamp}] {message}")
 
 def advanced_process_excel_memory(input_data, sf_owner_id=None):
     """
     Process Excel file entirely in memory without touching disk
     """
+    debug_print("Starting Excel processing in memory")
     # Read from bytes data
     df = pd.read_excel(io.BytesIO(input_data), skiprows=4)
-    debug_print("File read and rows skipped", f" (Rows: {df.shape[0]})")
+    debug_print("File read, first 4 rows skipped")
 
     # Drop empty columns
     df = df.dropna(axis=1, how='all')
-    debug_print("Empty columns dropped", f" (Columns: {df.shape[1]})")
+    debug_print("Empty columns deleted")
 
     # Define the strict output column order (as required in output)
+    # debug_print("Setting up strict column order for output to ease further manual review")
     strict_order = [
         'Name',
         'Buyer_Account__c',
@@ -55,34 +57,46 @@ def advanced_process_excel_memory(input_data, sf_owner_id=None):
     ]
 
     # Rename input columns to match strict output names if needed
+    # debug_print("Applying column renaming for input compatibility")
     rename_map = {
         'ANSWER PRECODE': '[D]ANSPRECODE',
         'ANSWER OPTION TEXT': '[D]OPTION TEXT'
     }
     df = df.rename(columns=rename_map)
+    # debug_print("Column renaming completed")
+    
     # Only keep columns that are in the strict_order, drop all others
+    debug_print("Filtering columns to keep only required ones")
     df = df[[col for col in df.columns if col in strict_order or col in rename_map.values()]]
-    # Add any missing columns as empty
+
+    # Add any missing columns if any, as empty
+    debug_print("Adding missing columns if any, as empty")
     for col in strict_order:
         if col not in df.columns:
             df[col] = ''
+    
     # Reindex to strict order
     df = df[strict_order]
-    debug_print("Columns aligned to strict output order", f" (Rows: {df.shape[0]}, Columns: {df.shape[1]})")
+    debug_print("Columns aligned to strict output order")
 
     # Fill DATE FLAGGED with current system date for all rows
+    # debug_print("Filling Date_Flagged__c with current timestamp")
     now_str = datetime.datetime.now().strftime('%Y-%m-%dT%H:%M:%S')
     df['Date_Flagged__c'] = now_str
-    debug_print("Filled DATE FLAGGED with current system date for all rows", f" (Rows: {df.shape[0]})")
+    debug_print("Filled DATE FLAGGED with current system date for all rows, in format compatible with Salesforce")
 
     # Fill Lucid_Action__c with 'Not Paused'
+    debug_print("Setting Lucid_Action__c to 'Not Paused' for all rows")
     df['Lucid_Action__c'] = 'Not Paused'
     
     # Fill OwnerId column with SF OwnerId if provided, else leave blank
+    debug_print("Populating SF OwnerId as detected from current username")
     if 'OwnerId' in df.columns:
         df['OwnerId'] = sf_owner_id if sf_owner_id else ''
+        # debug_print(f"OwnerId filled with: {sf_owner_id if sf_owner_id else 'blank'}")
 
     # Detect language for each cell in 'Custom_Flagged__c' column and add a new column 'QUESTION TEXT LANGUAGE'
+    debug_print("Starting language detection")
     if 'Custom_Flagged__c' in df.columns:
         def detect_lang_safe(text):
             try:
@@ -92,9 +106,10 @@ def advanced_process_excel_memory(input_data, sf_owner_id=None):
             except (LangDetectException, TypeError):
                 return ''
         df['QUESTION TEXT LANGUAGE'] = df['Custom_Flagged__c'].apply(detect_lang_safe)
-    debug_print("Language detection completed", f" (Rows: {df.shape[0]})")
+    # debug_print("Language detection completed")
 
     # Set Feedback/Recommendation/Setup_Issue__c based on language logic - always override
+    # debug_print("Applying language-based logic for Required_Action, Recommendation, Setup_Issue")
     if all(col in df.columns for col in ['Country_Language__c', 'QUESTION TEXT LANGUAGE', 'Required_Action__c', 'Recommendation__c', 'Setup_Issue__c']):
         mask_non_english = ~df['Country_Language__c'].astype(str).str.startswith('English')
         mask_qtext_english = df['QUESTION TEXT LANGUAGE'] == 'en'
@@ -108,28 +123,36 @@ def advanced_process_excel_memory(input_data, sf_owner_id=None):
         df.loc[mask_ok, 'Required_Action__c'] = '--None--'
         df.loc[mask_ok, 'Recommendation__c'] = '--None--'
         df.loc[mask_ok, 'Setup_Issue__c'] = '--None--'
-    debug_print("For non-English questions, Required_Action, Recommendation, Setup_Issue__c updated", f" (Rows: {df.shape[0]})")
+    debug_print("For non-English questions, Required_Action, Recommendation, Setup_Issue__c updated")
 
     # Sort by keys if present (after language logic)
+    debug_print("Sorting data by priority columns for the ease of manual review")
     sort_keys = [col for col in ['Required_Action__c','QuestionID__c', 'Survey_Number__c', '[D]ANSPRECODE'] if col in df.columns]
     if sort_keys:
         df = df.sort_values(by=sort_keys, kind='stable')
-    debug_print("Rows sorted to bring in order by QID.", f" (Rows: {df.shape[0]})")
+        debug_print(f"Data sorted by columns: {sort_keys}")
+    # debug_print("Rows sorted to bring in order by QID.")
 
     # Drop 'QUESTION TEXT LANGUAGE' column before exporting
+    # debug_print("Cleaning up temporary language detection column")
     if 'QUESTION TEXT LANGUAGE' in df.columns:
         df = df.drop(columns=['QUESTION TEXT LANGUAGE'])
+    
     # Save to memory buffer instead of file
+    debug_print("Converting DataFrame to Excel format in memory")
     output_buffer = io.BytesIO()
     df.to_excel(output_buffer, index=False, engine='openpyxl')
-    debug_print("Data saved to memory buffer as Excel")
+    # debug_print("Data saved to memory buffer as Excel")
     
     # Post-process with openpyxl in memory
+    # debug_print("Loading workbook for advanced formatting")
     output_buffer.seek(0)
     wb = openpyxl.load_workbook(output_buffer)
     ws = wb.active
-    debug_print("Workbook loaded")
+    # debug_print("Workbook loaded")
+    
     # Disable word wrap, unmerge, set width
+    # debug_print("Applying cell formatting (disable wrap, unmerge cells)")
     for row in ws.iter_rows():
         for cell in row:
             cell.alignment = Alignment(wrap_text=False)
@@ -139,12 +162,14 @@ def advanced_process_excel_memory(input_data, sf_owner_id=None):
         ws.unmerge_cells(str(merged))
 
     debug_print("Formatting applied (Disabled wordwrap, cells unmerged)")
+    
     # Clear any existing conditional formatting that might interfere
+    # debug_print("Clearing existing conditional formatting")
     while ws.conditional_formatting:
         ws.conditional_formatting._cf_rules.clear()
 
-    # debug_print(11, "Custom column widths set")
-    # Set custom column widths (supports output headers directly)
+    # Set custom column widths
+    debug_print("Setting custom column widths for better readability")
     orig_col_widths = {
         'Name': 20, 'Buyer_Account__c': 20, 'CSM_Name__c': 20, 'Project_Manager__c': 20, 'Project_Manager_Email__c': 20,
         'Date_Flagged__c': 15, 'Question_Visibility__c': 10, 'Custom_Create_Date__c': 15, 'Lucid_Action__c': 20, 'OwnerId': 20,
@@ -160,8 +185,10 @@ def advanced_process_excel_memory(input_data, sf_owner_id=None):
         else:
             ws.column_dimensions[col_letter].width = 20
 
-    debug_print("Column widths set")
+    # debug_print("Column widths set")
+    
     # Format DATE CREATED (handle renamed header)
+    debug_print("Formatting date columns formatted as per SF requirements")
     # If the original 'DATE CREATED' was renamed to 'Custom_Create_Date__c', use df to find column index
     if 'Custom_Create_Date__c' in df.columns:
         date_col_idx = df.columns.get_loc('Custom_Create_Date__c') + 1
@@ -169,8 +196,10 @@ def advanced_process_excel_memory(input_data, sf_owner_id=None):
             for cell in row:
                 cell.number_format = 'yyyy-mm-dd'
     
-    debug_print("Dates formatted")
+    #debug_print("Dates formatted")
+    
     # Right align DATE FLAGGED & DATE CREATED (use renamed names)
+    debug_print("Applying right alignment to date columns")
     for col_name in ['Date_Flagged__c', 'Custom_Create_Date__c']:
         if col_name in df.columns:
             col_idx = df.columns.get_loc(col_name) + 1
@@ -178,8 +207,10 @@ def advanced_process_excel_memory(input_data, sf_owner_id=None):
                 for cell in row:
                     cell.alignment = Alignment(horizontal='right')
 
-    debug_print("Alignment applied for Date_Flagged__c and Custom_Create_Date__c")
+    #debug_print("Alignment applied for Date_Flagged__c and Custom_Create_Date__c")
+    
     # Conditional formatting for renamed columns: Survey_Number__c, QuestionID__c, Custom_Create_Date__c
+    debug_print("Adding conditional formatting for (Survey_Number__c, QuestionID__c, Custom_Create_Date__c) for better row grouping and differentiation")
     for col_name in ['Survey_Number__c', 'QuestionID__c', 'Custom_Create_Date__c']:
         if col_name in df.columns:
             col_idx = df.columns.get_loc(col_name) + 1
@@ -193,8 +224,10 @@ def advanced_process_excel_memory(input_data, sf_owner_id=None):
                 )
             )
     
-    debug_print("Conditional formatting added for Survey_Number__c, QuestionID__c, Custom_Create_Date__c")
+    # debug_print("Conditional formatting added for Survey_Number__c, QuestionID__c, Custom_Create_Date__c")
+    
     # Ensure proper data format for sorting - convert all cells to proper data types
+    debug_print("Ensuring proper data types for all cells")
     for row in ws.iter_rows(min_row=2, max_row=ws.max_row):
         for cell in row:
             if cell.value is not None:
@@ -204,9 +237,11 @@ def advanced_process_excel_memory(input_data, sf_owner_id=None):
                 # Ensure numeric values are properly formatted
                 elif isinstance(cell.value, (int, float)):
                     cell.data_type = 'n'  # numeric type
-    
-    debug_print("Ensured proper data format for sorting - convert all cells to proper data types")
+
+    # debug_print("Ensured proper data format for sorting - convert all cells to proper data types")
+
     # Update formula logic to use renamed columns
+    debug_print("Adding formula in last column header to indicate Live Review Progress")
     feedback_col_idx = None
     base_col_idx = None
     if 'Required_Action__c' in df.columns:
@@ -224,8 +259,10 @@ def advanced_process_excel_memory(input_data, sf_owner_id=None):
     else:
         ws.cell(row=1, column=ws.max_column + 1).value = ''
     
-    debug_print("Formula added to last column header to indicate Live Review Progress")
+    # debug_print("Formula added to last column header to indicate Live Review Progress")
+    
     # Freeze the top row and enable autofilter
+    # debug_print("Setting up freeze panes and autofilter")
     ws.freeze_panes = 'A2'
     # Clear existing autofilter and reapply to ensure clean state
     ws.auto_filter.ref = None
@@ -233,8 +270,11 @@ def advanced_process_excel_memory(input_data, sf_owner_id=None):
     
     debug_print("Freezed first row")
     debug_print("Excel AutoFilter Enabled")
+    
     # Add data validation dropdown for Setup_Issue__c column
+    # debug_print("Creating data validation dropdowns")
     if 'Setup_Issue__c' in df.columns:
+        debug_print("Setting up Setup_Issue__c dropdown validation")
         setup_col_idx = df.columns.get_loc('Setup_Issue__c') + 1
         setup_col_letter = get_column_letter(setup_col_idx)
         
@@ -255,6 +295,7 @@ def advanced_process_excel_memory(input_data, sf_owner_id=None):
         ]
         
         # Create a helper sheet with the dropdown values
+        # debug_print("Creating helper sheet for dropdown values")
         helper_sheet = wb.create_sheet("ValidationData")
         for i, option in enumerate(dropdown_options, 1):
             helper_sheet.cell(row=i, column=1, value=option)
@@ -270,6 +311,7 @@ def advanced_process_excel_memory(input_data, sf_owner_id=None):
             helper_sheet.cell(row=i, column=2, value=option)
         
         # Create data validation for Setup_Issue__c (strict)
+        # debug_print("Applying strict validation to Setup_Issue__c column")
         dv = DataValidation(
             type="list",
             formula1=f"ValidationData!$A$1:$A${len(dropdown_options)}",
@@ -289,6 +331,7 @@ def advanced_process_excel_memory(input_data, sf_owner_id=None):
         
         # Create data validation for Required_Action__c (allows custom values)
         if 'Required_Action__c' in df.columns:
+            # debug_print("Setting up Required_Action__c dropdown validation")
             req_action_col_idx = df.columns.get_loc('Required_Action__c') + 1
             req_action_col_letter = get_column_letter(req_action_col_idx)
             
@@ -307,13 +350,16 @@ def advanced_process_excel_memory(input_data, sf_owner_id=None):
             dv_req.add(f'{req_action_col_letter}2:{req_action_col_letter}{ws.max_row}')
         
         # Hide the helper sheet
+        debug_print("Hiding validation helper sheet")
         helper_sheet.sheet_state = 'hidden'
     
     debug_print("Dropdowns added to Required_Action__c column (typing allowed)")
     debug_print("Dropdowns added to Setup_Issue__c column (strict selection only)")
+    
     # Save to memory buffer and return bytes
+    # debug_print("Finalizing and saving processed workbook")
     final_buffer = io.BytesIO()
     wb.save(final_buffer)
     final_buffer.seek(0)
-    debug_print("Final buffer saved")
+    debug_print("Excel processing completed successfully")
     return final_buffer.getvalue()
